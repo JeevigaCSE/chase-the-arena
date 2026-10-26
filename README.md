@@ -13,7 +13,7 @@
 ## 🕹️ Play Now
 
 Play the game live via GitHub Pages:  
-👉 **[https://<your-github-username>.github.io/chase-the-arena/](https://chase-the-arena.netlify.app/)**
+👉 **[Chase-The-Arena](https://chase-the-arena.netlify.app/)**
 
 ## 💻 Local Installation
 
