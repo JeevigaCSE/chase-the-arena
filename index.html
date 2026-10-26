@@ -1,0 +1,2959 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Chase the Arena // 10-Level Space Rocket Arcade</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #040611;
+      color: #f8fafc;
+      overflow-x: hidden;
+    }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .neon-border {
+      box-shadow: 0 0 25px rgba(56, 189, 248, 0.2), inset 0 0 18px rgba(56, 189, 248, 0.08);
+    }
+    canvas {
+      touch-action: none;
+      display: block;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 12px rgba(250, 204, 21, 0.45); }
+      50% { transform: scale(1.03); box-shadow: 0 0 22px rgba(250, 204, 21, 0.85); }
+    }
+    .powerup-ready-pulse {
+      animation: pulseGlow 1.4s infinite ease-in-out;
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-[#040611] text-slate-100">
+
+  <!-- TOP NAVIGATION BAR (SEPARATE, USER-FRIENDLY PAGES) -->
+  <header class="border-b border-slate-800/80 bg-slate-950/95 backdrop-blur-md sticky top-0 z-30">
+    <div class="max-w-6xl mx-auto px-3 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-2">
+      <!-- Brand (Clicking opens Home Page) -->
+      <button id="btnBrandHome" type="button" class="flex items-center gap-2.5 text-left group">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-400 via-pink-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-orange-500/25 text-lg group-hover:scale-105 transition-transform">
+          🚀
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-extrabold tracking-tight text-base sm:text-lg bg-gradient-to-r from-cyan-300 via-amber-200 to-pink-300 bg-clip-text text-transparent">CHASE THE ARENA</h1>
+            <span class="text-[10px] mono uppercase px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold hidden md:inline">10 Levels</span>
+          </div>
+          <p class="text-[11px] text-slate-400 hidden sm:block">Space Rocket Adventure</p>
+        </div>
+      </button>
+
+      <!-- Clean Multi-Page Navigation Bar -->
+      <nav class="flex items-center gap-1 bg-slate-900/95 p-1 rounded-xl border border-slate-800 overflow-x-auto">
+        <button id="btnHomeMenu" type="button" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-cyan-500 text-slate-950 shadow-sm whitespace-nowrap">
+          🏠 Home
+        </button>
+        <button id="tabArena" type="button" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-300 hover:text-white hover:bg-slate-800/60 whitespace-nowrap">
+          🎮 Play Ground
+        </button>
+        <button id="tabHangar" type="button" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-300 hover:text-white hover:bg-slate-800/60 whitespace-nowrap">
+          🛒 Shop
+        </button>
+        <button id="tabSandbox" type="button" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-300 hover:text-white hover:bg-slate-800/60 whitespace-nowrap">
+          ✨ Boosts &amp; Speed
+        </button>
+        <button id="tabStats" type="button" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-300 hover:text-white hover:bg-slate-800/60 whitespace-nowrap">
+          🏆 Trophies
+        </button>
+      </nav>
+
+      <!-- Quick Top Utilities (Coins, Guide, Sound) -->
+      <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-950/50 border border-amber-500/30 text-xs" title="Spend Coins in the Shop">
+          <span class="text-amber-300 font-medium">🪙 Coins:</span>
+          <span id="headerShards" class="mono font-bold text-amber-200">0</span>
+        </div>
+
+        <button id="btnOpenGuide" type="button" title="How to Play Guide" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-cyan-500/40 bg-cyan-950/40 text-cyan-200 hover:bg-cyan-900/50 transition-all">
+          ❓ Guide
+        </button>
+
+        <button id="btnAudio" type="button" title="Turn Sound On or Off" class="p-1.5 rounded-lg border border-slate-700 bg-slate-900 text-cyan-300 hover:border-cyan-400 transition-all">
+          <svg id="iconSoundOn" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+          </svg>
+          <svg id="iconSoundOff" class="w-4 h-4 hidden text-rose-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT CONTAINER (EACH SECTION IS A SEPARATE PAGE) -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-6 py-4 flex flex-col">
+
+    <!-- ========================================================= -->
+    <!-- PAGE 1: DEDICATED HOME PAGE (ROCKET & 10-LEVEL SELECTOR)  -->
+    <!-- ========================================================= -->
+    <section id="overlayStart" class="flex flex-col gap-5 my-auto py-2">
+      <!-- Hero Welcome Banner -->
+      <div class="bg-gradient-to-r from-indigo-950/90 via-slate-900 to-purple-950/90 border border-cyan-500/30 rounded-2xl p-5 sm:p-6 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <div class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-xs font-bold mb-2">
+            <span>🌌 Welcome to Home Base</span>
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-white mb-1">Ready to Chase the Arena?</h2>
+          <p class="text-xs sm:text-sm text-slate-300 max-w-xl">
+            Pick your custom Space Rocket and progress from <strong class="text-emerald-300">Level 1 (Easy)</strong> up to the <strong class="text-rose-400">Level 10 Extreme Solar Dragon Boss</strong>! Each rocket has its own unique hull shape, laser style, and Super Power.
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2.5 self-stretch md:self-center">
+          <div class="px-3.5 py-2 rounded-xl bg-slate-950/80 border border-slate-800 text-center">
+            <div class="text-[10px] text-slate-400 uppercase font-semibold">Best Score</div>
+            <div id="startHighScore" class="mono text-lg font-extrabold text-cyan-300">0</div>
+          </div>
+          <button id="btnStartGame" type="button" class="flex-1 md:flex-initial py-3 px-6 rounded-xl font-extrabold text-sm bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 hover:brightness-110 transition-all shadow-lg shadow-cyan-500/25">
+            ▶ Play <span id="selectedLevelBtnLabel">Level 1</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 1: Choose Your Space Rocket (With Visual Hull Previews) -->
+      <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h3 class="text-base sm:text-lg font-extrabold text-white">1. Choose Your Space Rocket</h3>
+            <p class="text-xs text-slate-400">Clicking a rocket immediately equips its unique 3D-style hull, weapon &amp; Super Power in the Play Ground!</p>
+          </div>
+          <span class="text-xs text-slate-300 bg-slate-950 px-3 py-1 rounded-lg border border-slate-800">Active Rocket: <strong id="activeShipBadge" class="text-cyan-300">Star Falcon</strong></span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <!-- Rocket 1: Star Falcon -->
+          <button type="button" data-ship="vanguard" class="ship-card text-left p-4 rounded-xl border-2 border-cyan-400 bg-cyan-950/30 transition-all flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="font-bold text-sm sm:text-base text-cyan-300">🚀 Star Falcon</span>
+                <span class="text-[10px] mono px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-200">Balanced Jet</span>
+              </div>
+              <!-- Inline SVG Preview of Star Falcon -->
+              <div class="w-full h-16 rounded-lg bg-slate-950/90 border border-slate-800/80 flex items-center justify-center mb-2.5 overflow-hidden">
+                <svg class="w-24 h-12" viewBox="-30 -22 60 44">
+                  <polygon points="-14,-5 -26,0 -14,5" fill="#f97316" />
+                  <polygon points="-2,-7 -13,-18 -16,-7" fill="#0284c7" stroke="#38bdf8" stroke-width="1.5" />
+                  <polygon points="-2,7 -13,18 -16,7" fill="#0284c7" stroke="#38bdf8" stroke-width="1.5" />
+                  <path d="M22,0 Q10,-10 -12,-8 L-14,-5 L-14,5 L-12,8 Q10,10 22,0 Z" fill="#e2e8f0" stroke="#38bdf8" stroke-width="2" />
+                  <path d="M22,0 Q15,-5 9,-6.5 L9,6.5 Q15,5 22,0 Z" fill="#38bdf8" />
+                  <ellipse cx="2" cy="0" rx="5.5" ry="3.5" fill="#0ea5e9" stroke="#e0f2fe" stroke-width="1.2" />
+                </svg>
+              </div>
+              <p class="text-xs text-slate-300 mb-2">Classic white &amp; cyan space rocket with swept wings and rapid twin blasters.</p>
+            </div>
+            <div class="text-[11px] font-semibold text-amber-300 pt-1 border-t border-slate-800/80">⚡ Super: Giant Blast Wave</div>
+          </button>
+
+          <!-- Rocket 2: Cosmic Comet -->
+          <button type="button" data-ship="phantom" class="ship-card text-left p-4 rounded-xl border-2 border-slate-800 bg-slate-950/60 hover:border-slate-700 transition-all flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="font-bold text-sm sm:text-base text-purple-300">🛸 Cosmic Comet</span>
+                <span class="text-[10px] mono px-2 py-0.5 rounded bg-purple-500/20 text-purple-200">Stealth Wing</span>
+              </div>
+              <!-- Inline SVG Preview of Cosmic Comet -->
+              <div class="w-full h-16 rounded-lg bg-slate-950/90 border border-slate-800/80 flex items-center justify-center mb-2.5 overflow-hidden">
+                <svg class="w-24 h-12" viewBox="-30 -22 60 44">
+                  <polygon points="-12,-4 -28,0 -12,4" fill="#a855f7" />
+                  <polygon points="8,-4 -14,-20 -8,-4" fill="#581c87" stroke="#c084fc" stroke-width="1.5" />
+                  <polygon points="8,4 -14,20 -8,4" fill="#581c87" stroke="#c084fc" stroke-width="1.5" />
+                  <polygon points="26,0 -6,-9 -14,-4 -10,0 -14,4 -6,9" fill="#1e1b4b" stroke="#e879f9" stroke-width="2" />
+                  <polygon points="10,0 -2,-3.5 -6,0 -2,3.5" fill="#f0abfc" />
+                </svg>
+              </div>
+              <p class="text-xs text-slate-300 mb-2">Ultra-fast purple crescent stealth fighter with forward-swept razor blades &amp; piercing railgun.</p>
+            </div>
+            <div class="text-[11px] font-semibold text-amber-300 pt-1 border-t border-slate-800/80">⚡ Super: Slow-Motion Time</div>
+          </button>
+
+          <!-- Rocket 3: Galaxy Cruiser -->
+          <button type="button" data-ship="titan" class="ship-card text-left p-4 rounded-xl border-2 border-slate-800 bg-slate-950/60 hover:border-slate-700 transition-all flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="font-bold text-sm sm:text-base text-emerald-300">🛡️ Galaxy Cruiser</span>
+                <span class="text-[10px] mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-200">Heavy Dreadnought</span>
+              </div>
+              <!-- Inline SVG Preview of Galaxy Cruiser -->
+              <div class="w-full h-16 rounded-lg bg-slate-950/90 border border-slate-800/80 flex items-center justify-center mb-2.5 overflow-hidden">
+                <svg class="w-24 h-12" viewBox="-30 -22 60 44">
+                  <polygon points="-15,-9 -26,-6 -15,-3" fill="#34d399" />
+                  <polygon points="-15,3 -26,6 -15,9" fill="#34d399" />
+                  <rect x="-12" y="-18" width="22" height="6" rx="2" fill="#065f46" stroke="#34d399" stroke-width="1.5" />
+                  <rect x="-12" y="12" width="22" height="6" rx="2" fill="#065f46" stroke="#34d399" stroke-width="1.5" />
+                  <polygon points="20,-5 20,5 8,12 -15,12 -15,-12 8,-12" fill="#064e3b" stroke="#6ee7b7" stroke-width="2" />
+                  <rect x="-3" y="-5" width="11" height="10" rx="2" fill="#fef08a" />
+                </svg>
+              </div>
+              <p class="text-xs text-slate-300 mb-2">Armored emerald battleship with twin side-cannons, dual thrusters &amp; 3-way spread lasers.</p>
+            </div>
+            <div class="text-[11px] font-semibold text-amber-300 pt-1 border-t border-slate-800/80">⚡ Super: Shield + Instant Heal</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 2: Pick a Level (1 to 10 Increasing Complexity) -->
+      <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div>
+            <h3 class="text-base sm:text-lg font-extrabold text-white">2. Select a Level (Easy → Hard → Boss)</h3>
+            <p class="text-xs text-slate-400">Levels start gentle and ramp up in enemy speed, patterns, and complexity all the way to the Level 10 Boss!</p>
+          </div>
+          <button id="btnUnlockAllLevels" type="button" class="text-xs px-3 py-1.5 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 border border-purple-500/40 font-semibold transition-all">
+            🔓 Unlock All 10 Levels
+          </button>
+        </div>
+
+        <div id="levelSelectGrid" class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 mb-5">
+          <!-- Populated dynamically with clear Level 1..10 cards and difficulty badges -->
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-2.5 pt-2 border-t border-slate-800/80">
+          <button id="btnStartFreshRun" type="button" class="flex-1 py-3 px-4 rounded-xl font-bold text-xs sm:text-sm bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 transition-all">
+            🆕 Start New Game from Level 1
+          </button>
+          <button id="btnStartAiDemo" type="button" class="py-3 px-5 rounded-xl font-semibold text-xs sm:text-sm bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30 transition-all">
+            🤖 Watch Auto-Pilot Play on Play Ground
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================= -->
+    <!-- PAGE 2: DEDICATED PLAY GROUND PAGE (CLEAN & FULL-WIDTH!)  -->
+    <!-- ========================================================= -->
+    <section id="viewArena" class="hidden flex-col gap-2.5 flex-1">
+      <!-- Top In-Game Status Bar -->
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 bg-slate-900/90 border border-slate-800 rounded-xl p-2.5">
+        <!-- Health -->
+        <div class="flex flex-col justify-center">
+          <div class="flex items-center justify-between text-[11px] text-slate-300 mb-1">
+            <span class="font-semibold">❤️ HEALTH (<span id="hudShipName" class="text-cyan-300">Star Falcon</span>)</span>
+            <span id="hudHpText" class="mono text-emerald-300 font-bold">125 / 125</span>
+          </div>
+          <div class="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+            <div id="hudHpBar" class="h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-150" style="width: 100%"></div>
+          </div>
+        </div>
+
+        <!-- Power-Up Meter -->
+        <div class="flex flex-col justify-center">
+          <div class="flex items-center justify-between text-[11px] text-slate-300 mb-1">
+            <span class="font-semibold">⭐ POWER METER (<strong id="hudLevel" class="text-cyan-300">1</strong>)</span>
+            <span id="hudXpText" class="mono text-cyan-300">0 / 65 Gems</span>
+          </div>
+          <div class="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+            <div id="hudXpBar" class="h-full bg-gradient-to-r from-cyan-500 to-blue-400 transition-all duration-150" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- Super Power -->
+        <div class="flex flex-col justify-center">
+          <div class="flex items-center justify-between text-[11px] text-slate-300 mb-1">
+            <span class="font-semibold">⚡ SUPER POWER</span>
+            <span id="hudSkillText" class="mono text-amber-300 font-bold">READY!</span>
+          </div>
+          <div class="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+            <div id="hudSkillBar" class="h-full bg-gradient-to-r from-amber-500 to-yellow-300 transition-all duration-100" style="width: 100%"></div>
+          </div>
+        </div>
+
+        <!-- Current Level & Remaining Fireballs -->
+        <div class="flex items-center justify-between sm:justify-around bg-slate-950/70 rounded-lg px-3 py-1 border border-slate-800/80">
+          <div>
+            <div class="text-[10px] text-slate-400 uppercase font-medium">Level</div>
+            <div class="mono text-sm sm:text-base font-bold text-amber-300"><span id="hudWave">1</span> / 10</div>
+          </div>
+          <div class="h-6 w-px bg-slate-800"></div>
+          <div>
+            <div class="text-[10px] text-slate-400 uppercase font-medium">Left</div>
+            <div id="hudCombo" class="mono text-sm sm:text-base font-bold text-rose-300">6</div>
+          </div>
+        </div>
+
+        <!-- Score, Auto-Pilot & Pause -->
+        <div class="col-span-2 sm:col-span-1 flex items-center justify-between bg-slate-950/70 rounded-lg px-3 py-1 border border-slate-800/80 gap-1">
+          <div>
+            <div class="text-[10px] text-slate-400 uppercase font-medium">Score</div>
+            <div id="hudScore" class="mono text-sm font-bold text-cyan-300">0</div>
+          </div>
+          <div class="flex items-center gap-1">
+            <button id="btnAiBot" type="button" title="Toggle Auto-Pilot" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] font-semibold text-slate-200 border border-slate-700 flex items-center gap-1">
+              <span id="aiBotDot" class="w-2 h-2 rounded-full bg-slate-500"></span>
+              <span>🤖 <strong id="aiBotLabel">OFF</strong></span>
+            </button>
+            <button id="btnPause" type="button" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] font-semibold text-slate-200 border border-slate-700">
+              Pause
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Level Progress Bar & Safe Power-Up Ready Button -->
+      <div class="flex flex-wrap items-center justify-between gap-2 bg-gradient-to-r from-indigo-950/80 via-slate-900/95 to-purple-950/80 border border-cyan-500/30 rounded-xl px-3.5 py-2">
+        <div class="flex items-center gap-2.5 flex-1 min-w-[200px]">
+          <span id="levelBadgePill" class="px-2 py-0.5 rounded-md bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 text-[11px] font-bold uppercase tracking-wide">
+            🌌 Level 1 (Easy): Calm Meteor Belt
+          </span>
+          <div class="flex-1 max-w-xs h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+            <div id="levelProgressBar" class="h-full bg-gradient-to-r from-orange-400 via-amber-400 to-emerald-400 transition-all duration-200" style="width: 0%"></div>
+          </div>
+          <span id="levelProgressText" class="mono text-xs font-bold text-emerald-300">0 / 6 Cleared</span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button id="btnOpenPendingPowerup" type="button" class="hidden powerup-ready-pulse px-3 py-1 rounded-lg bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-950 font-extrabold text-xs shadow-lg items-center gap-1.5">
+            <span>🎁 Power-Up Ready! (<span id="pendingPowerupCount">1</span>) — Click or Press [E]</span>
+          </button>
+          <span id="noPendingPowerupHint" class="text-[11px] text-slate-400 hidden md:inline">
+            💡 Collect purple gems to charge your next Power-Up!
+          </span>
+        </div>
+      </div>
+
+      <!-- Full-Width Space Play Ground Canvas -->
+      <div id="canvasContainer" class="relative w-full h-[440px] sm:h-[520px] rounded-2xl overflow-hidden border border-cyan-500/30 neon-border bg-[#03040c]">
+        <canvas id="gameCanvas" class="w-full h-full"></canvas>
+
+        <!-- Overlay: SAFE POWER-UP PICKER MODAL -->
+        <div id="overlayUpgrade" class="hidden absolute inset-0 bg-slate-950/88 backdrop-blur-md flex flex-col items-center justify-center p-4 z-20">
+          <div class="max-w-xl w-full bg-slate-900 border-2 border-amber-400/50 rounded-2xl p-5 shadow-2xl">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs mono uppercase px-2.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold">
+                🎁 CHOOSE YOUR POWER-UP
+              </span>
+              <span class="text-xs text-emerald-300 font-semibold">🛡️ +3s Invincibility Shield when you resume!</span>
+            </div>
+            <h3 class="text-lg sm:text-xl font-extrabold text-white mb-1">Upgrade Your Rocket!</h3>
+            <p class="text-xs text-slate-300 mb-4">Take your time—the game is paused. Click any card below to equip it:</p>
+            <div id="upgradeChoicesContainer" class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+              <!-- Populated dynamically -->
+            </div>
+            <div class="flex justify-end">
+              <button id="btnSkipUpgradeCoins" type="button" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 transition-all">
+                Skip Card &amp; Take +35 🪙 Coins Instead
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Overlay: LEVEL COMPLETE / VICTORY MODAL -->
+        <div id="overlayLevelWin" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-4 z-20">
+          <div class="max-w-md w-full bg-slate-900 border-2 border-emerald-400/50 rounded-2xl p-6 text-center shadow-2xl">
+            <div id="winEmojiIcon" class="w-14 h-14 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center mx-auto mb-3 text-3xl">
+              🎉
+            </div>
+            <h3 id="winTitleText" class="text-2xl font-extrabold text-white mb-1">Level 1 Complete!</h3>
+            <p id="winSubtitleText" class="text-xs text-slate-300 mb-4">Awesome flying! Your rocket health has been topped up and the next level is unlocked.</p>
+
+            <div class="grid grid-cols-3 gap-2 bg-slate-950/80 p-3 rounded-xl border border-slate-800 mb-4">
+              <div>
+                <div class="text-[10px] text-slate-400 uppercase">Score</div>
+                <div id="winScore" class="mono text-base font-bold text-cyan-300">0</div>
+              </div>
+              <div>
+                <div class="text-[10px] text-slate-400 uppercase">Cleared</div>
+                <div id="winLevelNum" class="mono text-base font-bold text-emerald-300">Level 1</div>
+              </div>
+              <div>
+                <div class="text-[10px] text-slate-400 uppercase">Level Bonus</div>
+                <div id="winBonusCoins" class="mono text-base font-bold text-amber-300">+35 🪙</div>
+              </div>
+            </div>
+
+            <div class="flex flex-col gap-2">
+              <button id="btnNextLevel" type="button" class="w-full py-3 px-4 rounded-xl font-bold text-sm bg-gradient-to-r from-emerald-400 to-cyan-400 text-slate-950 hover:brightness-110 transition-all shadow-lg">
+                ▶ Play Next Level (Level 2)
+              </button>
+              <div class="grid grid-cols-2 gap-2">
+                <button id="btnReplayLevel" type="button" class="py-2.5 px-3 rounded-xl font-semibold text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all">
+                  🔄 Replay This Level
+                </button>
+                <button id="btnWinToHome" type="button" class="py-2.5 px-3 rounded-xl font-semibold text-xs bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30 transition-all">
+                  🏠 Back to Home Page
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Overlay: GAME OVER MODAL -->
+        <div id="overlayGameOver" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-4 z-20">
+          <div class="max-w-md w-full bg-slate-900 border border-rose-500/40 rounded-2xl p-6 text-center shadow-2xl">
+            <div class="w-12 h-12 rounded-2xl bg-rose-500/20 border border-rose-500/40 text-rose-400 flex items-center justify-center mx-auto mb-3 text-2xl">
+              💥
+            </div>
+            <h3 class="text-2xl font-extrabold text-white mb-1">Rocket Down!</h3>
+            <p id="gameOverSubtitle" class="text-xs text-slate-300 mb-4">You kept all your Coins! Retry this level, start a fresh game from Level 1, or return to the Home Page.</p>
+
+            <div class="grid grid-cols-3 gap-2 bg-slate-950/80 p-3 rounded-xl border border-slate-800 mb-5">
+              <div>
+                <div class="text-[10px] text-slate-400 uppercase">Your Score</div>
+                <div id="goScore" class="mono text-base font-bold text-cyan-300">0</div>
+              </div>
+              <div>
+                <div class="text-[10px] text-slate-400 uppercase">Level</div>
+                <div id="goWave" class="mono text-base font-bold text-white">1 / 10</div>
+              </div>
+              <div>
+                <div class="text-[10px] text-slate-400 uppercase">Coins Earned</div>
+                <div id="goShards" class="mono text-base font-bold text-amber-300">+0</div>
+              </div>
+            </div>
+
+            <div class="flex flex-col gap-2">
+              <button id="btnRetry" type="button" class="w-full py-2.5 px-4 rounded-xl font-bold text-sm bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 hover:brightness-110 transition-all">
+                🔄 Retry Current Level
+              </button>
+              <div class="grid grid-cols-3 gap-2">
+                <button id="btnGameOverNewGame" type="button" class="py-2 px-2.5 rounded-xl font-semibold text-xs bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 transition-all">
+                  🆕 New Game
+                </button>
+                <button id="btnGameOverHome" type="button" class="py-2 px-2.5 rounded-xl font-semibold text-xs bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30 transition-all">
+                  🏠 Home Page
+                </button>
+                <button id="btnGoHangar" type="button" class="py-2 px-2.5 rounded-xl font-semibold text-xs bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 transition-all">
+                  🛒 Shop
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- On-Screen Touch / Quick Action Bar (Bottom of Canvas) -->
+        <div class="absolute bottom-3 left-3 right-3 flex items-end justify-between pointer-events-none z-10">
+          <!-- Virtual D-Pad for Mobile / Touch -->
+          <div class="grid grid-cols-3 gap-1 w-28 h-28 sm:hidden pointer-events-auto opacity-85">
+            <div></div>
+            <button type="button" data-dir="up" class="touch-dir bg-slate-800/80 border border-slate-600 rounded-lg flex items-center justify-center active:bg-cyan-500 text-xs">▲</button>
+            <div></div>
+            <button type="button" data-dir="left" class="touch-dir bg-slate-800/80 border border-slate-600 rounded-lg flex items-center justify-center active:bg-cyan-500 text-xs">◀</button>
+            <div class="bg-slate-900/50 rounded-lg border border-slate-800"></div>
+            <button type="button" data-dir="right" class="touch-dir bg-slate-800/80 border border-slate-600 rounded-lg flex items-center justify-center active:bg-cyan-500 text-xs">▶</button>
+            <div></div>
+            <button type="button" data-dir="down" class="touch-dir bg-slate-800/80 border border-slate-600 rounded-lg flex items-center justify-center active:bg-cyan-500 text-xs">▼</button>
+            <div></div>
+          </div>
+
+          <div class="hidden sm:flex items-center gap-2 bg-slate-950/80 backdrop-blur px-3 py-1.5 rounded-lg border border-slate-800/80 text-[11px] text-slate-300">
+            <span>🕹️ <strong class="text-white">WASD / Arrows</strong> Fly Rocket</span>
+            <span>&bull;</span>
+            <span>🎁 <strong class="text-amber-300">Press E</strong> Open Power-Up</span>
+            <span>&bull;</span>
+            <span>⚡ <strong class="text-cyan-300">SPACE</strong> Super Power</span>
+          </div>
+
+          <button id="btnTriggerOverdrive" type="button" class="pointer-events-auto px-3.5 py-2 rounded-xl font-bold text-xs bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-400/50 shadow-lg backdrop-blur transition-all active:scale-95">
+            ⚡ SUPER POWER [SPACE]
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================= -->
+    <!-- PAGE 3: UPGRADE SHOP PAGE                                 -->
+    <!-- ========================================================= -->
+    <section id="viewHangar" class="hidden flex-col gap-4">
+      <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 class="text-lg sm:text-xl font-bold text-white">🛒 Rocket Upgrade Shop</h2>
+            <p class="text-xs text-slate-300">Spend your <strong class="text-amber-300">🪙 Coins</strong> here! These upgrades stay forever across all 10 levels.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="btnAddTestShards" type="button" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 transition-all">
+              🪙 +250 Free Coins
+            </button>
+            <button id="btnResetUpgrades" type="button" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-all">
+              Reset &amp; Refund Coins
+            </button>
+          </div>
+        </div>
+
+        <div id="hangarGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <!-- Dynamically populated permanent upgrades -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================= -->
+    <!-- PAGE 4: BOOSTS, ACTIVE POWER-UPS & GAME SPEED PAGE        -->
+    <!-- ========================================================= -->
+    <section id="viewSandbox" class="hidden flex-col gap-4">
+      <!-- Top Row: Instant Helper Buttons & Equipped Power-Ups -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5">
+          <div class="flex items-center justify-between mb-1">
+            <h2 class="text-base sm:text-lg font-bold text-cyan-300">✨ Instant Helper Boosts</h2>
+            <span class="text-xs mono text-emerald-300">Switches to Play Ground</span>
+          </div>
+          <p class="text-xs text-slate-400 mb-3">Click any helper button below to activate it immediately in the Play Ground:</p>
+
+          <div class="grid grid-cols-2 gap-2.5">
+            <button id="btnGiftUpgrade" type="button" class="p-3 rounded-xl bg-slate-950 hover:bg-slate-800 border border-amber-500/30 text-left transition-all">
+              <div class="text-xs font-bold text-amber-300">🎁 Free Power-Up Card</div>
+              <div class="text-[11px] text-slate-400">Open power-up picker now</div>
+            </button>
+            <button id="btnHealShip" type="button" class="p-3 rounded-xl bg-slate-950 hover:bg-slate-800 border border-emerald-500/30 text-left transition-all">
+              <div class="text-xs font-bold text-emerald-300">❤️ Full Heal + Shield</div>
+              <div class="text-[11px] text-slate-400">Refill 100% rocket health</div>
+            </button>
+            <button id="btnSpawnSwarm" type="button" class="p-3 rounded-xl bg-slate-950 hover:bg-slate-800 border border-rose-500/30 text-left transition-all">
+              <div class="text-xs font-bold text-rose-300">🔥 +6 Fireballs</div>
+              <div class="text-[11px] text-slate-400">Spawn extra fireballs</div>
+            </button>
+            <button id="btnSpawnBoss" type="button" class="p-3 rounded-xl bg-slate-950 hover:bg-slate-800 border border-purple-500/30 text-left transition-all">
+              <div class="text-xs font-bold text-purple-300">👹 Jump to Level 10 Boss</div>
+              <div class="text-[11px] text-slate-400">Fight the Solar Dragon!</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Equipped Power-Ups & Live Engine Stats -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between gap-3">
+          <div>
+            <h3 class="text-base sm:text-lg font-bold text-white mb-1">🚀 Equipped Rocket Power-Ups</h3>
+            <p class="text-xs text-slate-400 mb-2.5">Power-ups collected during your current run:</p>
+            <div id="activeAugmentsList" class="flex flex-wrap gap-1.5 min-h-[40px] items-center text-xs text-slate-400">
+              <span class="text-slate-400 text-xs">Collect purple gems in the Play Ground to equip power-ups!</span>
+            </div>
+          </div>
+
+          <div class="bg-slate-950/90 rounded-xl p-3 border border-slate-800/90 grid grid-cols-3 gap-2 text-center text-[11px] mono">
+            <div>
+              <div class="text-slate-400">ON SCREEN</div>
+              <div id="statEntities" class="text-cyan-300 font-bold text-sm">0</div>
+            </div>
+            <div>
+              <div class="text-slate-400">SPARKS</div>
+              <div id="statParticles" class="text-purple-300 font-bold text-sm">0</div>
+            </div>
+            <div>
+              <div class="text-slate-400">LASER DPS</div>
+              <div id="statDps" class="text-emerald-300 font-bold text-sm">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Row: Custom Game Speed & Visual Sliders -->
+      <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div>
+            <h2 class="text-base sm:text-lg font-bold text-white">⚙️ Custom Game Speed &amp; Visual Sliders</h2>
+            <p class="text-xs text-slate-300">Make the game slower and easier to dodge, or turn up the speed and space fireworks!</p>
+          </div>
+          <button id="btnResetPhysics" type="button" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700">
+            Reset to Normal (1.0x)
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800">
+            <div class="flex justify-between text-xs font-semibold mb-2">
+              <span>⏱️ Overall Game Speed (Slow-Mo or Fast)</span>
+              <span id="lblTimeScale" class="mono text-cyan-300">1.00x</span>
+            </div>
+            <input id="sliderTimeScale" type="range" min="0.25" max="2.0" step="0.05" value="1.0" class="w-full accent-cyan-400 cursor-pointer" />
+            <p class="text-[11px] text-slate-400 mt-1">Slide left for easy slow-motion dodging, or right for fast action.</p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800">
+            <div class="flex justify-between text-xs font-semibold mb-2">
+              <span>🎆 Fireball Explosion Sparks</span>
+              <span id="lblParticles" class="mono text-purple-300">1.0x</span>
+            </div>
+            <input id="sliderParticles" type="range" min="0.2" max="3.0" step="0.2" value="1.0" class="w-full accent-purple-400 cursor-pointer" />
+            <p class="text-[11px] text-slate-400 mt-1">Controls how many colorful sparks burst when a Fireball explodes.</p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800">
+            <div class="flex justify-between text-xs font-semibold mb-2">
+              <span>🔥 Fireball &amp; Comet Speed</span>
+              <span id="lblEnemySpeed" class="mono text-rose-300">1.0x</span>
+            </div>
+            <input id="sliderEnemySpeed" type="range" min="0.5" max="2.5" step="0.1" value="1.0" class="w-full accent-rose-400 cursor-pointer" />
+            <p class="text-[11px] text-slate-400 mt-1">Lower this to 0.5x if you want enemies to move much slower.</p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800">
+            <div class="flex justify-between text-xs font-semibold mb-2">
+              <span>🌌 Space Background Warp Speed</span>
+              <span id="lblStarSpeed" class="mono text-amber-300">1.0x</span>
+            </div>
+            <input id="sliderStarSpeed" type="range" min="0.0" max="4.0" step="0.2" value="1.0" class="w-full accent-amber-400 cursor-pointer" />
+            <p class="text-[11px] text-slate-400 mt-1">Adjust how fast the stars and space dust drift past your rocket.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================= -->
+    <!-- PAGE 5: TROPHIES & PLAYER STATS PAGE                      -->
+    <!-- ========================================================= -->
+    <section id="viewStats" class="hidden flex-col gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3">📊 My Space Records</h3>
+          <div class="space-y-2.5 text-sm">
+            <div class="flex justify-between py-1.5 border-b border-slate-800/80">
+              <span class="text-slate-400">Highest Score</span>
+              <span id="careerHighScore" class="mono font-bold text-cyan-300">0</span>
+            </div>
+            <div class="flex justify-between py-1.5 border-b border-slate-800/80">
+              <span class="text-slate-400">Highest Level Unlocked</span>
+              <span id="careerHighestWave" class="mono font-bold text-white">1 / 10</span>
+            </div>
+            <div class="flex justify-between py-1.5 border-b border-slate-800/80">
+              <span class="text-slate-400">Total Fireballs Blasted</span>
+              <span id="careerKills" class="mono font-bold text-emerald-300">0</span>
+            </div>
+            <div class="flex justify-between py-1.5">
+              <span class="text-slate-400">Solar Bosses Defeated</span>
+              <span id="careerBosses" class="mono font-bold text-purple-300">0</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="md:col-span-2 bg-slate-900/80 border border-slate-800 rounded-2xl p-5">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3">🏆 Trophy Case &amp; Achievements</h3>
+          <div id="badgesGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- GLOBAL MODAL: ONE-TIME FIRST-PLAY SIMPLE VISUAL GUIDE -->
+  <div id="overlayGuide" class="hidden fixed inset-0 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-4 z-50">
+    <div class="max-w-lg w-full bg-slate-900 border-2 border-cyan-400/50 rounded-2xl p-5 sm:p-6 shadow-2xl">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+          👋 Welcome to Chase the Arena!
+        </span>
+        <span class="text-xs mono text-slate-400 font-semibold">Quick 3-Step Guide</span>
+      </div>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-white mb-1">How to Play (Super Easy!)</h2>
+      <p class="text-xs sm:text-sm text-slate-300 mb-4">Your Space Rocket <strong class="text-cyan-300">aims and shoots automatically</strong>! Clear Levels 1 to 10 and defeat the Level 10 Boss.</p>
+
+      <div class="space-y-2.5 mb-5">
+        <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-950/90 border border-slate-800">
+          <div class="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-base shrink-0 font-bold text-cyan-300">1</div>
+          <div>
+            <div class="text-xs sm:text-sm font-bold text-white">Pick Your Rocket &amp; Level on the Home Page 🏠</div>
+            <p class="text-xs text-slate-400">Choose from 3 unique Space Rockets and progress from <strong class="text-emerald-300">Easy (Level 1)</strong> to <strong class="text-rose-400">Extreme Boss (Level 10)</strong>!</p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-950/90 border border-slate-800">
+          <div class="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-base shrink-0 font-bold text-amber-300">2</div>
+          <div>
+            <div class="text-xs sm:text-sm font-bold text-white">Pick Power-Ups Whenever You Are Ready 🎁</div>
+            <p class="text-xs text-slate-400">When your Power Meter fills up, a glowing <strong class="text-amber-300">🎁 Power-Up Ready</strong> button appears above the arena. Click it or press <strong class="text-amber-300">E</strong> whenever you want!</p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-950/90 border border-slate-800">
+          <div class="w-8 h-8 rounded-lg bg-purple-500/20 border border-purple-400/40 flex items-center justify-center text-base shrink-0 font-bold text-purple-300">3</div>
+          <div>
+            <div class="text-xs sm:text-sm font-bold text-white">Use the Top Tabs for Shop, Boosts &amp; Trophies 🏆</div>
+            <p class="text-xs text-slate-400">Switch between <strong class="text-white">🏠 Home</strong>, <strong class="text-white">🎮 Play Ground</strong>, <strong class="text-white">🛒 Shop</strong>, <strong class="text-white">✨ Boosts &amp; Speed</strong>, and <strong class="text-white">🏆 Trophies</strong> anytime from the top bar.</p>
+          </div>
+        </div>
+      </div>
+
+      <button id="btnCloseGuide" type="button" class="w-full py-3 px-5 rounded-xl font-bold text-sm bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 hover:brightness-110 transition-all shadow-lg shadow-cyan-500/25">
+        Got It! Let's Play →
+      </button>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toastBanner" class="fixed bottom-5 right-5 z-50 hidden px-4 py-2.5 rounded-xl bg-slate-900/95 border border-cyan-400/50 text-xs font-semibold text-cyan-200 shadow-xl">
+    Notification
+  </div>
+
+  <script>
+    (function() {
+      "use strict";
+
+      // ==========================================
+      // 1. PERSISTENT STORAGE & 10-LEVEL PROGRESS
+      // ==========================================
+      const STORAGE_KEY = "chase_the_arena_save_v3";
+      const defaultSave = {
+        shards: 150,
+        highScore: 0,
+        highestWave: 1,
+        clearedLevels: {},
+        totalKills: 0,
+        bossesKilled: 0,
+        hasSeenGuide: false,
+        upgrades: {
+          hull: 0,
+          firepower: 0,
+          thrusters: 0,
+          magnet: 0
+        }
+      };
+
+      let saveData = JSON.parse(JSON.stringify(defaultSave));
+      function loadSave() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            saveData = Object.assign({}, defaultSave, parsed);
+            saveData.upgrades = Object.assign({}, defaultSave.upgrades, parsed.upgrades || {});
+            saveData.clearedLevels = Object.assign({}, parsed.clearedLevels || {});
+          }
+        } catch (e) {}
+      }
+      function persistSave() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
+        } catch (e) {}
+        updateMetaUI();
+      }
+
+      // ==========================================
+      // 2. PROCEDURAL WEB AUDIO SYNTHESIZER
+      // ==========================================
+      const Sound = {
+        ctx: null,
+        muted: false,
+        init() {
+          if (!this.ctx) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) this.ctx = new AudioCtx();
+          }
+          if (this.ctx && this.ctx.state === "suspended") {
+            this.ctx.resume();
+          }
+        },
+        playShoot(type) {
+          if (this.muted || !this.ctx) return;
+          try {
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+
+            if (type === "phantom") {
+              osc.type = "sawtooth";
+              osc.frequency.setValueAtTime(780, now);
+              osc.frequency.exponentialRampToValueAtTime(140, now + 0.13);
+              gain.gain.setValueAtTime(0.07, now);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
+              osc.start(now);
+              osc.stop(now + 0.13);
+            } else if (type === "titan") {
+              osc.type = "square";
+              osc.frequency.setValueAtTime(320, now);
+              osc.frequency.exponentialRampToValueAtTime(85, now + 0.1);
+              gain.gain.setValueAtTime(0.06, now);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+              osc.start(now);
+              osc.stop(now + 0.1);
+            } else {
+              osc.type = "triangle";
+              osc.frequency.setValueAtTime(560, now);
+              osc.frequency.exponentialRampToValueAtTime(160, now + 0.08);
+              gain.gain.setValueAtTime(0.06, now);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+              osc.start(now);
+              osc.stop(now + 0.08);
+            }
+          } catch (e) {}
+        },
+        playExplosion(isBig) {
+          if (this.muted || !this.ctx) return;
+          try {
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = "sawtooth";
+            osc.frequency.setValueAtTime(isBig ? 140 : 220, now);
+            osc.frequency.exponentialRampToValueAtTime(28, now + (isBig ? 0.35 : 0.15));
+            gain.gain.setValueAtTime(isBig ? 0.14 : 0.07, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + (isBig ? 0.35 : 0.15));
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + (isBig ? 0.35 : 0.15));
+          } catch (e) {}
+        },
+        playPowerup() {
+          if (this.muted || !this.ctx) return;
+          try {
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(440, now);
+            osc.frequency.setValueAtTime(660, now + 0.07);
+            osc.frequency.setValueAtTime(880, now + 0.14);
+            gain.gain.setValueAtTime(0.09, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.25);
+          } catch (e) {}
+        }
+      };
+
+      // =======================================================
+      // 3. 10-LEVEL PROGRESSIVE DIFFICULTY (EASY -> HARD -> BOSS)
+      // =======================================================
+      const LEVEL_CONFIGS = [
+        { level: 1, name: "Calm Meteor Belt", diff: "Easy", diffColor: "text-emerald-300 bg-emerald-500/15 border-emerald-500/30", totalEnemies: 6, spawnInterval: 1.85, speedScale: 0.72, hpScale: 0.85, maxConcurrent: 4, mix: ["fireball"], coinReward: 35 },
+        { level: 2, name: "Gentle Nebula", diff: "Easy", diffColor: "text-emerald-300 bg-emerald-500/15 border-emerald-500/30", totalEnemies: 9, spawnInterval: 1.65, speedScale: 0.82, hpScale: 0.95, maxConcurrent: 5, mix: ["fireball", "comet"], coinReward: 45 },
+        { level: 3, name: "Twin Star Drift", diff: "Normal", diffColor: "text-cyan-300 bg-cyan-500/15 border-cyan-500/30", totalEnemies: 12, spawnInterval: 1.45, speedScale: 0.92, hpScale: 1.10, maxConcurrent: 6, mix: ["fireball", "comet", "solarstar"], coinReward: 60 },
+        { level: 4, name: "Crimson Asteroid Ring", diff: "Normal", diffColor: "text-cyan-300 bg-cyan-500/15 border-cyan-500/30", totalEnemies: 15, spawnInterval: 1.30, speedScale: 1.00, hpScale: 1.25, maxConcurrent: 7, mix: ["fireball", "comet", "solarstar"], coinReward: 75 },
+        { level: 5, name: "Solar Guardian Gate", diff: "Mini-Boss", diffColor: "text-amber-300 bg-amber-500/15 border-amber-500/30", totalEnemies: 14, spawnInterval: 1.22, speedScale: 1.08, hpScale: 1.40, maxConcurrent: 8, mix: ["fireball", "comet", "solarstar"], hasMiniBoss: true, coinReward: 110 },
+        { level: 6, name: "Supernova Storm", diff: "Medium-Hard", diffColor: "text-amber-300 bg-amber-500/15 border-amber-500/30", totalEnemies: 18, spawnInterval: 1.12, speedScale: 1.16, hpScale: 1.55, maxConcurrent: 9, mix: ["fireball", "comet", "solarstar", "splitter"], coinReward: 105 },
+        { level: 7, name: "Hyper Comet Blitz", diff: "Hard", diffColor: "text-orange-300 bg-orange-500/15 border-orange-500/30", totalEnemies: 22, spawnInterval: 1.02, speedScale: 1.24, hpScale: 1.75, maxConcurrent: 10, mix: ["comet", "splitter", "solarstar"], coinReward: 125 },
+        { level: 8, name: "Plasma Vortex", diff: "Hard", diffColor: "text-orange-300 bg-orange-500/15 border-orange-500/30", totalEnemies: 26, spawnInterval: 0.92, speedScale: 1.32, hpScale: 1.95, maxConcurrent: 11, mix: ["solarstar", "splitter", "comet", "fireball"], coinReward: 150 },
+        { level: 9, name: "Abyssal Sun's Core", diff: "Very Hard", diffColor: "text-rose-300 bg-rose-500/15 border-rose-500/30", totalEnemies: 30, spawnInterval: 0.82, speedScale: 1.42, hpScale: 2.20, maxConcurrent: 12, mix: ["solarstar", "splitter", "comet", "fireball"], hasMiniBoss: true, coinReward: 190 },
+        { level: 10, name: "Solar Dragon Emperor", diff: "EXTREME BOSS", diffColor: "text-rose-400 bg-rose-500/20 border-rose-500/40", totalEnemies: 16, spawnInterval: 1.05, speedScale: 1.45, hpScale: 2.40, maxConcurrent: 12, mix: ["fireball", "comet", "solarstar", "splitter"], isFinalBoss: true, coinReward: 400 }
+      ];
+
+      const SHIPS = {
+        vanguard: {
+          name: "Star Falcon",
+          color: "#38bdf8",
+          wingColor: "#0284c7",
+          hp: 125,
+          speed: 265,
+          fireRate: 0.16,
+          damage: 22,
+          skillName: "Blast Wave",
+          skillCooldown: 6.5
+        },
+        phantom: {
+          name: "Cosmic Comet",
+          color: "#c084fc",
+          wingColor: "#7e22ce",
+          hp: 105,
+          speed: 315,
+          fireRate: 0.25,
+          damage: 48,
+          pierce: 3,
+          skillName: "Slow-Motion",
+          skillCooldown: 7.5
+        },
+        titan: {
+          name: "Galaxy Cruiser",
+          color: "#34d399",
+          wingColor: "#059669",
+          hp: 175,
+          speed: 230,
+          fireRate: 0.24,
+          damage: 19,
+          spread: 3,
+          skillName: "Shield + Heal",
+          skillCooldown: 7.0
+        }
+      };
+
+      const AUGMENTS_POOL = [
+        { id: "multishot", icon: "🔫", name: "Double Laser", desc: "Fires +1 extra laser beam with every shot!", color: "text-cyan-300" },
+        { id: "rapid", icon: "⚡", name: "Turbo Blaster", desc: "Shoots 25% faster to melt fireballs.", color: "text-amber-300" },
+        { id: "ricochet", icon: "🪃", name: "Bouncing Shots", desc: "Lasers bounce from one fireball to the next!", color: "text-purple-300" },
+        { id: "orbitals", icon: "🛰️", name: "Guardian Satellites", desc: "Glowing space orbs spin around your rocket.", color: "text-emerald-300" },
+        { id: "vamp", icon: "❤️", name: "Repair Nanobots", desc: "Restores rocket health every 6 fireballs defeated.", color: "text-rose-300" },
+        { id: "crit", icon: "💥", name: "Mega Damage", desc: "+30% laser damage with super critical hits!", color: "text-sky-300" },
+        { id: "nova", icon: "🌩️", name: "Chain Lightning", desc: "Shots zap nearby fireballs with electric bolts!", color: "text-yellow-300" }
+      ];
+
+      const HANGAR_UPGRADES = [
+        { key: "hull", name: "❤️ Extra Rocket Armor", desc: "Start every level with +25 more Max Health.", baseCost: 40, max: 5 },
+        { key: "firepower", name: "💥 Stronger Lasers", desc: "Deal +15% more laser damage to all Fireballs.", baseCost: 50, max: 5 },
+        { key: "thrusters", name: "🚀 Turbo Jet Engines", desc: "Fly +10% faster to dodge with ease.", baseCost: 35, max: 5 },
+        { key: "magnet", name: "🧲 Star Gem Magnet", desc: "Pull in Gems & Coins from +40% farther away.", baseCost: 30, max: 5 }
+      ];
+
+      const BADGES = [
+        { id: "first_blood", name: "Space Cadet", desc: "Blast 25 Fireballs in total", check: () => saveData.totalKills >= 25 },
+        { id: "centurion", name: "Galaxy Defender", desc: "Blast 150 Fireballs in total", check: () => saveData.totalKills >= 150 },
+        { id: "boss_slayer", name: "Dragon Slayer", desc: "Defeat a Solar Boss in the Arena", check: () => saveData.bossesKilled >= 1 },
+        { id: "wave_5", name: "Halfway Hero", desc: "Unlock Level 5 or higher", check: () => saveData.highestWave >= 5 },
+        { id: "high_roller", name: "Cosmic Legend", desc: "Score over 5,000 points", check: () => saveData.highScore >= 5000 },
+        { id: "engineer", name: "Rocket Builder", desc: "Buy at least 3 upgrades in the Shop", check: () => Object.values(saveData.upgrades).reduce((a, b) => a + b, 0) >= 3 }
+      ];
+
+      // ==========================================
+      // 4. ENGINE & GAME LOOP STATE
+      // ==========================================
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+
+      let physicsConfig = {
+        timeScale: 1.0,
+        particleMult: 1.0,
+        enemySpeedMult: 1.0,
+        starSpeedMult: 1.0
+      };
+
+      let selectedShipKey = "vanguard";
+      let selectedLevelNum = 1;
+      let aiPilotEnabled = false;
+      let upgradeModalOpenedAt = 0;
+
+      const Game = {
+        running: false,
+        paused: false,
+        inUpgradeModal: false,
+        width: 800,
+        height: 500,
+        score: 0,
+        wave: 1,
+        enemiesToSpawn: 0,
+        enemiesDefeatedInLevel: 0,
+        enemiesTotalInLevel: 6,
+        spawnTimer: 0,
+        spawnInterval: 1.8,
+        bossSpawned: false,
+        pendingUpgrades: 0,
+        shardsEarnedThisRun: 0,
+        killsThisRun: 0,
+        screenShake: 0,
+        chronoTimer: 0,
+        dpsTracker: 0,
+        animTime: 0,
+        player: null,
+        bullets: [],
+        enemyBullets: [],
+        enemies: [],
+        particles: [],
+        gems: [],
+        floatingTexts: [],
+        stars: [],
+        nebulas: [],
+        planets: []
+      };
+
+      const keys = {};
+      const touchDirs = { up: false, down: false, left: false, right: false };
+      const mouse = { x: 400, y: 250, down: false, active: false };
+
+      function initSpaceEnvironment() {
+        Game.stars = [];
+        for (let i = 0; i < 95; i++) {
+          const colors = ["#ffffff", "#bae6fd", "#fde68a", "#e9d5ff"];
+          Game.stars.push({
+            x: Math.random() * Game.width,
+            y: Math.random() * Game.height,
+            size: Math.random() * 2.0 + 0.4,
+            speed: Math.random() * 45 + 10,
+            alpha: Math.random() * 0.7 + 0.25,
+            twinkleSpeed: Math.random() * 3 + 1,
+            color: colors[Math.floor(Math.random() * colors.length)]
+          });
+        }
+
+        Game.nebulas = [
+          { x: Game.width * 0.25, y: Game.height * 0.3, r: 170, color: "rgba(88, 28, 135, 0.16)", vy: 4 },
+          { x: Game.width * 0.75, y: Game.height * 0.65, r: 210, color: "rgba(14, 116, 144, 0.15)", vy: 6 },
+          { x: Game.width * 0.5, y: Game.height * 0.2, r: 140, color: "rgba(190, 24, 93, 0.11)", vy: 3 }
+        ];
+
+        Game.planets = [
+          { x: Game.width * 0.82, y: Game.height * 0.24, r: 34, bodyColor1: "#4f46e5", bodyColor2: "#1e1b4b", hasRing: true, ringColor: "rgba(165, 180, 252, 0.35)", vy: 5 },
+          { x: Game.width * 0.16, y: Game.height * 0.72, r: 20, bodyColor1: "#f59e0b", bodyColor2: "#78350f", hasRing: false, vy: 8 }
+        ];
+      }
+
+      function resizeCanvas() {
+        const container = document.getElementById("canvasContainer");
+        if (!container) return;
+        const rect = container.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          canvas.width = rect.width;
+          canvas.height = rect.height;
+          Game.width = rect.width;
+          Game.height = rect.height;
+          if (Game.stars.length === 0) initSpaceEnvironment();
+        }
+      }
+
+      function createPlayer(shipKey) {
+        const base = SHIPS[shipKey] || SHIPS.vanguard;
+        const hpBonus = (saveData.upgrades.hull || 0) * 25;
+        const dmgMult = 1 + (saveData.upgrades.firepower || 0) * 0.15;
+        const spdMult = 1 + (saveData.upgrades.thrusters || 0) * 0.10;
+
+        return {
+          shipKey,
+          name: base.name,
+          color: base.color,
+          wingColor: base.wingColor,
+          x: Game.width / 2,
+          y: Game.height / 2,
+          vx: 0,
+          vy: 0,
+          radius: shipKey === "titan" ? 18 : 16,
+          angle: -Math.PI / 2,
+          maxHp: base.hp + hpBonus,
+          hp: base.hp + hpBonus,
+          speed: base.speed * spdMult,
+          fireRate: base.fireRate,
+          fireTimer: 0,
+          damage: Math.round(base.damage * dmgMult),
+          pierce: base.pierce || 1,
+          spread: base.spread || 1,
+          ricochet: 0,
+          orbitals: 0,
+          orbitalAngle: 0,
+          vamp: 0,
+          chainLightning: false,
+          skillCooldown: base.skillCooldown,
+          skillTimer: 0,
+          shieldTimer: 2.0,
+          level: 1,
+          xp: 0,
+          nextXp: 65,
+          augments: {}
+        };
+      }
+
+      // Immediately sync the active player's rocket hull & stats when a new rocket is picked on the Home page
+      function applySelectedShipToActivePlayer(newShipKey) {
+        if (!Game.player) return;
+        const oldPlayer = Game.player;
+        const fresh = createPlayer(newShipKey);
+        fresh.x = oldPlayer.x;
+        fresh.y = oldPlayer.y;
+        fresh.level = oldPlayer.level;
+        fresh.xp = oldPlayer.xp;
+        fresh.nextXp = oldPlayer.nextXp;
+        fresh.augments = Object.assign({}, oldPlayer.augments);
+
+        // Re-apply collected in-run augments to the new rocket hull
+        if (fresh.augments.rapid) {
+          for (let i = 0; i < fresh.augments.rapid; i++) fresh.fireRate = Math.max(0.06, fresh.fireRate * 0.8);
+        }
+        if (fresh.augments.ricochet) fresh.ricochet += fresh.augments.ricochet;
+        if (fresh.augments.orbitals) fresh.orbitals += fresh.augments.orbitals * 2;
+        if (fresh.augments.vamp) fresh.vamp += fresh.augments.vamp;
+        if (fresh.augments.crit) {
+          for (let i = 0; i < fresh.augments.crit; i++) fresh.damage = Math.round(fresh.damage * 1.25);
+        }
+        if (fresh.augments.nova) fresh.chainLightning = true;
+
+        Game.player = fresh;
+        updateHud();
+      }
+
+      // Navigate cleanly between the 5 Dedicated Pages
+      function switchPage(pageId, skipAutoStart) {
+        const pages = {
+          btnHomeMenu: "overlayStart",
+          tabArena: "viewArena",
+          tabHangar: "viewHangar",
+          tabSandbox: "viewSandbox",
+          tabStats: "viewStats"
+        };
+
+        Object.keys(pages).forEach(btnId => {
+          const btn = document.getElementById(btnId);
+          const sec = document.getElementById(pages[btnId]);
+          if (btnId === pageId) {
+            btn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-cyan-500 text-slate-950 shadow-sm whitespace-nowrap";
+            sec.classList.remove("hidden");
+            sec.classList.add("flex");
+          } else {
+            btn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-300 hover:text-white hover:bg-slate-800/60 whitespace-nowrap";
+            sec.classList.add("hidden");
+            sec.classList.remove("flex");
+          }
+        });
+
+        if (pageId === "tabArena") {
+          resizeCanvas();
+          if (Game.player && Game.player.shipKey !== selectedShipKey) {
+            applySelectedShipToActivePlayer(selectedShipKey);
+          }
+          if (!skipAutoStart && !Game.player) {
+            startLevel(selectedLevelNum, true, aiPilotEnabled);
+          }
+        } else if (pageId === "btnHomeMenu") {
+          renderLevelSelectorGrid();
+        }
+      }
+
+      function startLevel(levelNum, resetPlayerBuild, withAiDemo) {
+        Sound.init();
+        if (typeof withAiDemo === "boolean") {
+          aiPilotEnabled = withAiDemo;
+          updateAiBotButton();
+        }
+
+        // Switch to the dedicated Play Ground page first so the canvas has full dimensions
+        switchPage("tabArena", true);
+        resizeCanvas();
+
+        const clampedLvl = Math.max(1, Math.min(10, levelNum || 1));
+        selectedLevelNum = clampedLvl;
+        const cfg = LEVEL_CONFIGS[clampedLvl - 1];
+
+        Game.running = true;
+        Game.paused = false;
+        Game.inUpgradeModal = false;
+        Game.wave = clampedLvl;
+        document.getElementById("btnPause").textContent = "Pause";
+
+        // Always recreate or sync the player if the user switched rockets on the Home Page!
+        if (resetPlayerBuild || !Game.player) {
+          Game.score = 0;
+          Game.shardsEarnedThisRun = 0;
+          Game.killsThisRun = 0;
+          Game.pendingUpgrades = 0;
+          Game.player = createPlayer(selectedShipKey);
+        } else {
+          if (Game.player.shipKey !== selectedShipKey) {
+            applySelectedShipToActivePlayer(selectedShipKey);
+          }
+          Game.player.x = Game.width / 2;
+          Game.player.y = Game.height / 2;
+          Game.player.hp = Game.player.maxHp;
+          Game.player.shieldTimer = 2.5;
+        }
+
+        Game.enemiesToSpawn = cfg.totalEnemies;
+        Game.enemiesDefeatedInLevel = 0;
+        Game.enemiesTotalInLevel = cfg.totalEnemies + (cfg.isFinalBoss || cfg.hasMiniBoss ? 1 : 0);
+        Game.spawnInterval = cfg.spawnInterval;
+        Game.spawnTimer = 0.4;
+        Game.bossSpawned = false;
+        Game.screenShake = 0;
+        Game.chronoTimer = 0;
+        Game.bullets = [];
+        Game.enemyBullets = [];
+        Game.enemies = [];
+        Game.particles = [];
+        Game.gems = [];
+        Game.floatingTexts = [];
+
+        document.getElementById("overlayGuide").classList.add("hidden");
+        document.getElementById("overlayGameOver").classList.add("hidden");
+        document.getElementById("overlayLevelWin").classList.add("hidden");
+        document.getElementById("overlayUpgrade").classList.add("hidden");
+        document.getElementById("activeShipBadge").textContent = Game.player.name;
+
+        renderActiveAugments();
+        updatePendingPowerupUI();
+        updateLevelBannerUI();
+        updateHud();
+
+        addFloatingText(`🚀 LEVEL ${clampedLvl} (${cfg.diff.toUpperCase()}): ${cfg.name.toUpperCase()}`, Game.width / 2, 70, "#38bdf8");
+      }
+
+      function renderLevelSelectorGrid() {
+        const grid = document.getElementById("levelSelectGrid");
+        if (!grid) return;
+        grid.innerHTML = "";
+        for (let lvl = 1; lvl <= 10; lvl++) {
+          const cfg = LEVEL_CONFIGS[lvl - 1];
+          const unlocked = lvl <= saveData.highestWave;
+          const cleared = !!saveData.clearedLevels[lvl];
+          const isSelected = lvl === selectedLevelNum;
+          const isBoss = lvl === 10;
+
+          const card = document.createElement("div");
+          card.className = `p-3 rounded-xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
+            isSelected
+              ? "border-2 border-cyan-400 bg-cyan-950/35 shadow-md"
+              : unlocked
+              ? "border-slate-800 bg-slate-950/80 hover:border-slate-600"
+              : "border-slate-800/60 bg-slate-950/35 opacity-55"
+          }`;
+
+          card.innerHTML = `
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-extrabold ${isBoss ? "text-rose-400" : isSelected ? "text-cyan-300" : "text-white"}">
+                  ${isBoss ? "👹 Level 10" : `Level ${lvl}`}
+                </span>
+                <span class="text-xs">${cleared ? "⭐" : unlocked ? "🔓" : "🔒"}</span>
+              </div>
+              <div class="mb-1">
+                <span class="text-[9px] mono uppercase px-1.5 py-0.5 rounded border font-bold ${cfg.diffColor}">
+                  ${cfg.diff}
+                </span>
+              </div>
+              <div class="text-[11px] text-slate-300 font-medium truncate mb-2">${cfg.name}</div>
+            </div>
+            <button type="button" class="w-full py-1.5 px-2 rounded-lg text-[11px] font-bold transition-all ${
+              !unlocked
+                ? "bg-slate-900 text-slate-600 cursor-not-allowed"
+                : isSelected
+                ? "bg-cyan-400 text-slate-950 hover:brightness-110"
+                : "bg-slate-800 hover:bg-slate-700 text-cyan-300"
+            }">
+              ${!unlocked ? "Locked" : cleared ? "▶ Replay Level" : "▶ Play Level"}
+            </button>
+          `;
+
+          card.addEventListener("click", () => {
+            if (!unlocked) {
+              showToast(`Clear Level ${lvl - 1} first (or click 'Unlock All 10 Levels')!`);
+              return;
+            }
+            selectedLevelNum = lvl;
+            document.getElementById("selectedLevelBtnLabel").textContent = isBoss ? "Level 10 Boss" : `Level ${lvl}`;
+            renderLevelSelectorGrid();
+          });
+
+          const playBtn = card.querySelector("button");
+          playBtn.addEventListener("click", e => {
+            e.stopPropagation();
+            if (!unlocked) {
+              showToast(`Clear Level ${lvl - 1} first (or click 'Unlock All 10 Levels')!`);
+              return;
+            }
+            selectedLevelNum = lvl;
+            startLevel(lvl, false, false);
+          });
+
+          grid.appendChild(card);
+        }
+        document.getElementById("selectedLevelBtnLabel").textContent =
+          selectedLevelNum === 10 ? "Level 10 Boss" : `Level ${selectedLevelNum}`;
+      }
+
+      function getEdgeSpawn() {
+        const pad = 28;
+        const side = Math.floor(Math.random() * 4);
+        if (side === 0) return { x: Math.random() * Game.width, y: -pad };
+        if (side === 1) return { x: Game.width + pad, y: Math.random() * Game.height };
+        if (side === 2) return { x: Math.random() * Game.width, y: Game.height + pad };
+        return { x: -pad, y: Math.random() * Game.height };
+      }
+
+      function spawnSingleEnemy(levelNum, forcedType, customPos) {
+        const pos = customPos || getEdgeSpawn();
+        const cfg = LEVEL_CONFIGS[(levelNum - 1) % LEVEL_CONFIGS.length];
+        const mix = cfg.mix;
+        const chosen = forcedType || mix[Math.floor(Math.random() * mix.length)];
+        const hpScale = cfg.hpScale || (1 + (levelNum - 1) * 0.18);
+        const speedScale = cfg.speedScale || 1.0;
+
+        if (chosen === "solarstar") {
+          Game.enemies.push({
+            type: "solarstar",
+            x: pos.x,
+            y: pos.y,
+            radius: 16,
+            hp: Math.round(38 * hpScale),
+            maxHp: Math.round(38 * hpScale),
+            speed: Math.round(74 * speedScale),
+            color: "#e879f9",
+            shootTimer: Math.max(0.85, 2.0 - levelNum * 0.1) + Math.random() * 0.6,
+            spin: 0,
+            scoreVal: 150
+          });
+        } else if (chosen === "splitter") {
+          // High-complexity magma core introduced in Levels 6-10 that splits into 2 mini-fireballs when destroyed!
+          Game.enemies.push({
+            type: "splitter",
+            x: pos.x,
+            y: pos.y,
+            radius: 19,
+            hp: Math.round(48 * hpScale),
+            maxHp: Math.round(48 * hpScale),
+            speed: Math.round(84 * speedScale),
+            color: "#fb7185",
+            spin: 0,
+            scoreVal: 175
+          });
+        } else if (chosen === "comet") {
+          Game.enemies.push({
+            type: "comet",
+            x: pos.x,
+            y: pos.y,
+            radius: 13,
+            hp: Math.round(25 * hpScale),
+            maxHp: Math.round(25 * hpScale),
+            speed: Math.round(132 * speedScale),
+            color: "#38bdf8",
+            trail: [],
+            scoreVal: 120
+          });
+        } else {
+          Game.enemies.push({
+            type: "fireball",
+            x: pos.x,
+            y: pos.y,
+            radius: forcedType === "minifire" ? 10 : 15,
+            hp: Math.round((forcedType === "minifire" ? 14 : 30) * hpScale),
+            maxHp: Math.round((forcedType === "minifire" ? 14 : 30) * hpScale),
+            speed: Math.round((forcedType === "minifire" ? 125 : 95) * speedScale),
+            color: "#f97316",
+            scoreVal: forcedType === "minifire" ? 55 : 95
+          });
+        }
+      }
+
+      function spawnBoss(isMiniBoss) {
+        const pos = getEdgeSpawn();
+        const hp = isMiniBoss ? 340 + Game.wave * 75 : 1650 + Game.wave * 150;
+        Game.enemies.push({
+          type: "boss",
+          isMiniBoss: !!isMiniBoss,
+          name: isMiniBoss ? "Solar Guardian" : "Solar Dragon Emperor",
+          x: pos.x,
+          y: pos.y,
+          radius: isMiniBoss ? 27 : 40,
+          hp: hp,
+          maxHp: hp,
+          speed: isMiniBoss ? 68 : 64,
+          color: "#f59e0b",
+          shootTimer: 1.0,
+          summonTimer: 4.5,
+          attackPattern: 0,
+          spin: 0,
+          scoreVal: isMiniBoss ? 800 : 3500
+        });
+        addFloatingText(
+          isMiniBoss ? "🔥 MINI-BOSS: SOLAR GUARDIAN!" : "👹 EXTREME BOSS: SOLAR DRAGON EMPEROR!",
+          Game.width / 2,
+          85,
+          "#fde047"
+        );
+      }
+
+      function triggerOverdrive() {
+        if (!Game.running || Game.paused || Game.inUpgradeModal || !Game.player) return;
+        const p = Game.player;
+        if (p.skillTimer > 0) return;
+
+        p.skillTimer = p.skillCooldown;
+        Sound.playPowerup();
+        Game.screenShake = 10;
+
+        if (p.shipKey === "vanguard") {
+          Game.enemyBullets = [];
+          createBurst(p.x, p.y, "#38bdf8", 42);
+          for (let i = Game.enemies.length - 1; i >= 0; i--) {
+            const e = Game.enemies[i];
+            const dist = Math.hypot(e.x - p.x, e.y - p.y);
+            if (dist < 300) {
+              damageEnemy(e, p.damage * 3.5, true);
+            }
+          }
+          addFloatingText("⚡ BLAST WAVE!", p.x, p.y - 25, "#38bdf8");
+        } else if (p.shipKey === "phantom") {
+          Game.chronoTimer = 4.5;
+          createBurst(p.x, p.y, "#c084fc", 35);
+          addFloatingText("⚡ SLOW-MOTION TIME!", p.x, p.y - 25, "#c084fc");
+        } else {
+          p.shieldTimer = 4.5;
+          p.hp = Math.min(p.maxHp, p.hp + 45);
+          createBurst(p.x, p.y, "#34d399", 35);
+          addFloatingText("🛡️ SHIELD +45 HEALTH!", p.x, p.y - 25, "#34d399");
+        }
+        updateHud();
+      }
+
+      function fireWeapon() {
+        const p = Game.player;
+        if (!p) return;
+        Sound.playShoot(p.shipKey);
+
+        const totalShots = p.spread + (p.augments.multishot || 0);
+        const spreadArc = Math.min(0.65, (totalShots - 1) * 0.13);
+
+        for (let i = 0; i < totalShots; i++) {
+          const offset = totalShots === 1 ? 0 : -spreadArc / 2 + (spreadArc / (totalShots - 1)) * i;
+          const ang = p.angle + offset;
+          const speed = p.shipKey === "phantom" ? 700 : 540;
+          Game.bullets.push({
+            x: p.x + Math.cos(ang) * 20,
+            y: p.y + Math.sin(ang) * 20,
+            vx: Math.cos(ang) * speed,
+            vy: Math.sin(ang) * speed,
+            ang: ang,
+            shipType: p.shipKey,
+            radius: p.shipKey === "phantom" ? 5.2 : p.shipKey === "titan" ? 4.8 : 4.0,
+            color: p.color,
+            damage: p.damage,
+            pierce: p.pierce,
+            ricochet: p.ricochet,
+            life: 1.4
+          });
+        }
+      }
+
+      function createBurst(x, y, color, count) {
+        const total = Math.max(2, Math.round(count * physicsConfig.particleMult));
+        for (let i = 0; i < total; i++) {
+          const ang = Math.random() * Math.PI * 2;
+          const spd = Math.random() * 180 + 30;
+          Game.particles.push({
+            x,
+            y,
+            vx: Math.cos(ang) * spd,
+            vy: Math.sin(ang) * spd,
+            radius: Math.random() * 3.0 + 1,
+            color,
+            alpha: 1,
+            decay: Math.random() * 1.4 + 0.9
+          });
+        }
+      }
+
+      function addFloatingText(text, x, y, color) {
+        Game.floatingTexts.push({
+          text,
+          x,
+          y,
+          color: color || "#ffffff",
+          alpha: 1.0,
+          vy: -32
+        });
+      }
+
+      function damageEnemy(enemy, rawDmg, isSkill) {
+        const p = Game.player;
+        const isCrit = Math.random() < (p && p.augments.crit ? 0.35 : 0.1);
+        const dmg = Math.round(rawDmg * (isCrit ? 1.6 : 1.0));
+        enemy.hp -= dmg;
+        Game.dpsTracker += dmg;
+
+        addFloatingText(isCrit ? dmg + "!" : String(dmg), enemy.x, enemy.y - enemy.radius, isCrit ? "#fde047" : "#f8fafc");
+
+        if (!isSkill && p && p.chainLightning && Math.random() < 0.35 && Game.enemies.length > 1) {
+          for (let i = 0; i < Game.enemies.length; i++) {
+            const other = Game.enemies[i];
+            if (other !== enemy && Math.hypot(other.x - enemy.x, other.y - enemy.y) < 155) {
+              other.hp -= Math.round(dmg * 0.55);
+              createBurst(other.x, other.y, "#fde047", 5);
+              break;
+            }
+          }
+        }
+
+        if (enemy.hp <= 0) {
+          const idx = Game.enemies.indexOf(enemy);
+          if (idx !== -1) Game.enemies.splice(idx, 1);
+
+          Sound.playExplosion(enemy.type === "boss");
+          createBurst(enemy.x, enemy.y, enemy.color, enemy.type === "boss" ? 50 : 16);
+          Game.screenShake = Math.min(12, Game.screenShake + (enemy.type === "boss" ? 9 : 2.5));
+
+          // If a Splitter Magma Core is destroyed, spawn 2 fast mini-fireballs!
+          if (enemy.type === "splitter") {
+            Game.enemiesTotalInLevel += 2;
+            spawnSingleEnemy(Game.wave, "minifire", { x: enemy.x - 14, y: enemy.y - 10 });
+            spawnSingleEnemy(Game.wave, "minifire", { x: enemy.x + 14, y: enemy.y + 10 });
+          }
+
+          Game.score += enemy.scoreVal;
+          Game.killsThisRun++;
+          Game.enemiesDefeatedInLevel++;
+          saveData.totalKills++;
+          if (enemy.type === "boss") saveData.bossesKilled++;
+
+          if (p && p.vamp > 0 && Game.killsThisRun % 6 === 0) {
+            p.hp = Math.min(p.maxHp, p.hp + p.vamp * 4);
+            addFloatingText("+" + (p.vamp * 4) + " HEALTH", p.x, p.y - 20, "#34d399");
+          }
+
+          const drops = enemy.type === "boss" ? 10 : 1;
+          for (let d = 0; d < drops; d++) {
+            Game.gems.push({
+              x: enemy.x + (Math.random() - 0.5) * 24,
+              y: enemy.y + (Math.random() - 0.5) * 24,
+              xp: enemy.type === "boss" ? 35 : 24,
+              shards: enemy.type === "boss" ? 10 : 3,
+              radius: 6.5
+            });
+          }
+
+          updateLevelBannerUI();
+        }
+      }
+
+      function checkLevelUp() {
+        const p = Game.player;
+        if (!p || p.xp < p.nextXp) return;
+        p.xp -= p.nextXp;
+        p.level++;
+        p.nextXp = Math.round(p.nextXp * 1.28);
+        p.hp = Math.min(p.maxHp, p.hp + 15);
+        Game.pendingUpgrades++;
+        Sound.playPowerup();
+        addFloatingText("🎁 POWER-UP READY! (Click Top Button or Press E)", p.x, p.y - 28, "#fde047");
+        updatePendingPowerupUI();
+
+        if (aiPilotEnabled) {
+          const randomAug = AUGMENTS_POOL[Math.floor(Math.random() * AUGMENTS_POOL.length)];
+          Game.pendingUpgrades = Math.max(0, Game.pendingUpgrades - 1);
+          applyAugment(randomAug.id);
+          updatePendingPowerupUI();
+        }
+      }
+
+      function updatePendingPowerupUI() {
+        const btn = document.getElementById("btnOpenPendingPowerup");
+        const hint = document.getElementById("noPendingPowerupHint");
+        const countEl = document.getElementById("pendingPowerupCount");
+        if (Game.pendingUpgrades > 0) {
+          btn.classList.remove("hidden");
+          btn.classList.add("flex");
+          countEl.textContent = String(Game.pendingUpgrades);
+          if (hint) hint.classList.add("hidden");
+        } else {
+          btn.classList.add("hidden");
+          btn.classList.remove("flex");
+          if (hint) hint.classList.remove("hidden");
+        }
+      }
+
+      function updateLevelBannerUI() {
+        const cfg = LEVEL_CONFIGS[(Game.wave - 1) % LEVEL_CONFIGS.length];
+        const done = Math.min(Game.enemiesTotalInLevel, Game.enemiesDefeatedInLevel);
+        const pct = Math.min(100, Math.round((done / Math.max(1, Game.enemiesTotalInLevel)) * 100));
+        document.getElementById("levelBadgePill").textContent = `🌌 Level ${Game.wave} (${cfg.diff}): ${cfg.name}`;
+        document.getElementById("levelProgressBar").style.width = pct + "%";
+        document.getElementById("levelProgressText").textContent = `${done} / ${Game.enemiesTotalInLevel} Cleared`;
+      }
+
+      function openUpgradeDraft() {
+        if (!Game.player) return;
+        Game.inUpgradeModal = true;
+        upgradeModalOpenedAt = performance.now();
+        const container = document.getElementById("upgradeChoicesContainer");
+        container.innerHTML = "";
+
+        const shuffled = AUGMENTS_POOL.slice().sort(() => Math.random() - 0.5).slice(0, 3);
+        shuffled.forEach(aug => {
+          const currentRank = (Game.player && Game.player.augments[aug.id]) || 0;
+          const card = document.createElement("button");
+          card.type = "button";
+          card.className = "text-left p-4 rounded-xl bg-slate-950 hover:bg-slate-800/90 border-2 border-slate-700 hover:border-amber-400 transition-all flex flex-col justify-between";
+          card.innerHTML = `
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-xl">${aug.icon}</span>
+                <span class="text-[10px] mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">Level ${currentRank + 1}</span>
+              </div>
+              <div class="font-extrabold text-sm ${aug.color} mb-1">${aug.name}</div>
+              <p class="text-xs text-slate-300 mb-3">${aug.desc}</p>
+            </div>
+            <div class="w-full py-1.5 px-2.5 rounded-lg bg-cyan-500/20 text-center text-[11px] font-bold text-cyan-300 border border-cyan-500/30">
+              Click to Equip →
+            </div>
+          `;
+          card.addEventListener("click", () => {
+            if (performance.now() - upgradeModalOpenedAt < 350) return;
+            if (Game.pendingUpgrades > 0) Game.pendingUpgrades--;
+            applyAugment(aug.id);
+            closeUpgradeModalWithShield();
+          });
+          container.appendChild(card);
+        });
+
+        document.getElementById("overlayUpgrade").classList.remove("hidden");
+      }
+
+      function closeUpgradeModalWithShield() {
+        Game.inUpgradeModal = false;
+        document.getElementById("overlayUpgrade").classList.add("hidden");
+        if (Game.player) {
+          Game.player.shieldTimer = Math.max(Game.player.shieldTimer, 3.0);
+          addFloatingText("🛡️ 3s SAFE SHIELD!", Game.player.x, Game.player.y - 25, "#34d399");
+        }
+        updatePendingPowerupUI();
+      }
+
+      function applyAugment(id) {
+        const p = Game.player;
+        if (!p) return;
+        p.augments[id] = (p.augments[id] || 0) + 1;
+
+        if (id === "rapid") p.fireRate = Math.max(0.06, p.fireRate * 0.8);
+        if (id === "ricochet") p.ricochet += 1;
+        if (id === "orbitals") p.orbitals += 2;
+        if (id === "vamp") p.vamp += 1;
+        if (id === "crit") p.damage = Math.round(p.damage * 1.25);
+        if (id === "nova") p.chainLightning = true;
+
+        renderActiveAugments();
+        showToast("🚀 Power-Up Equipped!");
+      }
+
+      function renderActiveAugments() {
+        const list = document.getElementById("activeAugmentsList");
+        if (!Game.player) return;
+        const entries = Object.entries(Game.player.augments);
+        if (entries.length === 0) {
+          list.innerHTML = `<span class="text-slate-400 text-xs">Collect purple gems in the Play Ground to equip power-ups!</span>`;
+          return;
+        }
+        list.innerHTML = entries.map(([id, rank]) => {
+          const meta = AUGMENTS_POOL.find(a => a.id === id) || { icon: "🚀", name: id, color: "text-cyan-300" };
+          return `<span class="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-xs font-semibold ${meta.color}">${meta.icon} ${meta.name} <strong class="text-white">x${rank}</strong></span>`;
+        }).join("");
+      }
+
+      function triggerLevelComplete() {
+        Game.running = false;
+        Sound.playPowerup();
+
+        const cfg = LEVEL_CONFIGS[(Game.wave - 1) % LEVEL_CONFIGS.length];
+        saveData.clearedLevels[Game.wave] = true;
+        if (Game.wave < 10 && Game.wave + 1 > saveData.highestWave) {
+          saveData.highestWave = Game.wave + 1;
+        }
+        saveData.shards += cfg.coinReward;
+        Game.shardsEarnedThisRun += cfg.coinReward;
+        Game.score += cfg.coinReward * 10;
+        if (Game.score > saveData.highScore) saveData.highScore = Game.score;
+        persistSave();
+
+        const isFinal = Game.wave === 10;
+        document.getElementById("winEmojiIcon").textContent = isFinal ? "🏆" : "🎉";
+        document.getElementById("winTitleText").textContent = isFinal
+          ? "YOU BEAT ALL 10 LEVELS!"
+          : `Level ${Game.wave} Complete!`;
+        document.getElementById("winSubtitleText").textContent = isFinal
+          ? "Incredible! You defeated the Solar Dragon Emperor and conquered Chase the Arena!"
+          : `Awesome job! You unlocked Level ${Game.wave + 1} (${LEVEL_CONFIGS[Game.wave].diff}) and earned +${cfg.coinReward} Coins.`;
+
+        document.getElementById("winScore").textContent = Game.score.toLocaleString();
+        document.getElementById("winLevelNum").textContent = `Level ${Game.wave}`;
+        document.getElementById("winBonusCoins").textContent = `+${cfg.coinReward} 🪙`;
+
+        const nextBtn = document.getElementById("btnNextLevel");
+        if (isFinal) {
+          nextBtn.textContent = "🔄 Play Again from Level 1 (Keep Power-Ups)";
+        } else {
+          nextBtn.textContent = `▶ Play Next Level (Level ${Game.wave + 1} - ${LEVEL_CONFIGS[Game.wave].diff})`;
+        }
+
+        document.getElementById("overlayLevelWin").classList.remove("hidden");
+      }
+
+      function triggerGameOver() {
+        Game.running = false;
+        Sound.playExplosion(true);
+        if (Game.score > saveData.highScore) saveData.highScore = Game.score;
+        persistSave();
+
+        document.getElementById("goScore").textContent = Game.score.toLocaleString();
+        document.getElementById("goWave").textContent = `${Game.wave} / 10`;
+        document.getElementById("goShards").textContent = "+" + Game.shardsEarnedThisRun;
+        document.getElementById("overlayGameOver").classList.remove("hidden");
+      }
+
+      // ==========================================
+      // 5. SIMULATION UPDATE STEP
+      // ==========================================
+      function updateSimulation(rawDt) {
+        const dt = Math.min(0.05, rawDt) * physicsConfig.timeScale;
+        Game.animTime += dt;
+
+        for (let i = 0; i < Game.stars.length; i++) {
+          const s = Game.stars[i];
+          s.y += s.speed * physicsConfig.starSpeedMult * dt;
+          if (s.y > Game.height) {
+            s.y = 0;
+            s.x = Math.random() * Game.width;
+          }
+        }
+        for (let i = 0; i < Game.nebulas.length; i++) {
+          const nb = Game.nebulas[i];
+          nb.y += nb.vy * physicsConfig.starSpeedMult * dt;
+          if (nb.y - nb.r > Game.height) nb.y = -nb.r;
+        }
+        for (let i = 0; i < Game.planets.length; i++) {
+          const pl = Game.planets[i];
+          pl.y += pl.vy * physicsConfig.starSpeedMult * dt;
+          if (pl.y - pl.r * 2 > Game.height) pl.y = -pl.r * 2;
+        }
+
+        if (!Game.running || Game.paused || Game.inUpgradeModal || !Game.player) return;
+
+        const p = Game.player;
+        const cfg = LEVEL_CONFIGS[(Game.wave - 1) % LEVEL_CONFIGS.length];
+
+        if (Game.screenShake > 0) Game.screenShake = Math.max(0, Game.screenShake - dt * 28);
+        if (Game.chronoTimer > 0) Game.chronoTimer = Math.max(0, Game.chronoTimer - dt);
+        if (p.skillTimer > 0) p.skillTimer = Math.max(0, p.skillTimer - dt);
+        if (p.shieldTimer > 0) p.shieldTimer = Math.max(0, p.shieldTimer - dt);
+        Game.dpsTracker = Math.max(0, Game.dpsTracker - dt * 45);
+
+        if (Game.enemiesToSpawn > 0) {
+          Game.spawnTimer -= dt;
+          if (Game.spawnTimer <= 0 && Game.enemies.length < (cfg.maxConcurrent || 10)) {
+            Game.spawnTimer = Game.spawnInterval;
+            Game.enemiesToSpawn--;
+            spawnSingleEnemy(Game.wave);
+          }
+        } else if (!Game.bossSpawned && (cfg.isFinalBoss || cfg.hasMiniBoss)) {
+          Game.bossSpawned = true;
+          spawnBoss(!!cfg.hasMiniBoss);
+        } else if (Game.enemiesToSpawn === 0 && Game.enemies.length === 0) {
+          triggerLevelComplete();
+          return;
+        }
+
+        let moveX = 0;
+        let moveY = 0;
+        if (keys["KeyW"] || keys["ArrowUp"] || touchDirs.up) moveY -= 1;
+        if (keys["KeyS"] || keys["ArrowDown"] || touchDirs.down) moveY += 1;
+        if (keys["KeyA"] || keys["ArrowLeft"] || touchDirs.left) moveX -= 1;
+        if (keys["KeyD"] || keys["ArrowRight"] || touchDirs.right) moveX += 1;
+
+        if (aiPilotEnabled && moveX === 0 && moveY === 0) {
+          let threatX = 0;
+          let threatY = 0;
+          let closeThreats = 0;
+          for (let i = 0; i < Game.enemies.length; i++) {
+            const e = Game.enemies[i];
+            const dx = p.x - e.x;
+            const dy = p.y - e.y;
+            const d = Math.hypot(dx, dy) || 1;
+            if (d < 210) {
+              threatX += (dx / d) * (210 - d);
+              threatY += (dy / d) * (210 - d);
+              if (d < 120) closeThreats++;
+            }
+          }
+          for (let i = 0; i < Game.enemyBullets.length; i++) {
+            const b = Game.enemyBullets[i];
+            const dx = p.x - b.x;
+            const dy = p.y - b.y;
+            const d = Math.hypot(dx, dy) || 1;
+            if (d < 110) {
+              threatX += (dx / d) * 160;
+              threatY += (dy / d) * 160;
+            }
+          }
+          const centerPullX = (Game.width / 2 - p.x) * 0.35;
+          const centerPullY = (Game.height / 2 - p.y) * 0.35;
+          moveX = threatX + centerPullX;
+          moveY = threatY + centerPullY;
+
+          if (closeThreats >= 2 && p.skillTimer <= 0) {
+            triggerOverdrive();
+          }
+        }
+
+        const moveLen = Math.hypot(moveX, moveY);
+        if (moveLen > 0) {
+          p.vx = (moveX / moveLen) * p.speed;
+          p.vy = (moveY / moveLen) * p.speed;
+        } else {
+          p.vx *= 0.82;
+          p.vy *= 0.82;
+        }
+
+        p.x = Math.max(p.radius, Math.min(Game.width - p.radius, p.x + p.vx * dt));
+        p.y = Math.max(p.radius, Math.min(Game.height - p.radius, p.y + p.vy * dt));
+
+        let nearestEnemy = null;
+        let minDist = Infinity;
+        for (let i = 0; i < Game.enemies.length; i++) {
+          const e = Game.enemies[i];
+          const d = Math.hypot(e.x - p.x, e.y - p.y);
+          if (d < minDist) {
+            minDist = d;
+            nearestEnemy = e;
+          }
+        }
+
+        if (nearestEnemy) {
+          p.angle = Math.atan2(nearestEnemy.y - p.y, nearestEnemy.x - p.x);
+        } else if (mouse.active) {
+          p.angle = Math.atan2(mouse.y - p.y, mouse.x - p.x);
+        } else if (moveLen > 0) {
+          p.angle = Math.atan2(p.vy, p.vx);
+        }
+
+        p.fireTimer -= dt;
+        if (p.fireTimer <= 0 && Game.enemies.length > 0) {
+          p.fireTimer = p.fireRate;
+          fireWeapon();
+        }
+
+        p.orbitalAngle += dt * 4.2;
+        if (p.orbitals > 0) {
+          const orbRadius = 48;
+          for (let i = 0; i < p.orbitals; i++) {
+            const ang = p.orbitalAngle + (i * Math.PI * 2) / p.orbitals;
+            const ox = p.x + Math.cos(ang) * orbRadius;
+            const oy = p.y + Math.sin(ang) * orbRadius;
+            for (let j = Game.enemies.length - 1; j >= 0; j--) {
+              const e = Game.enemies[j];
+              if (Math.hypot(e.x - ox, e.y - oy) < e.radius + 8) {
+                damageEnemy(e, p.damage * 0.45, true);
+              }
+            }
+          }
+        }
+
+        for (let i = Game.bullets.length - 1; i >= 0; i--) {
+          const b = Game.bullets[i];
+          b.x += b.vx * dt;
+          b.y += b.vy * dt;
+          b.life -= dt;
+          if (b.life <= 0 || b.x < -20 || b.x > Game.width + 20 || b.y < -20 || b.y > Game.height + 20) {
+            Game.bullets.splice(i, 1);
+            continue;
+          }
+
+          for (let j = Game.enemies.length - 1; j >= 0; j--) {
+            const e = Game.enemies[j];
+            if (Math.hypot(e.x - b.x, e.y - b.y) < e.radius + b.radius) {
+              createBurst(b.x, b.y, b.color, 5);
+              damageEnemy(e, b.damage, false);
+
+              if (b.ricochet > 0 && Game.enemies.length > 0) {
+                b.ricochet--;
+                const nextTarget = Game.enemies[Math.floor(Math.random() * Game.enemies.length)];
+                if (nextTarget && nextTarget !== e) {
+                  const rAng = Math.atan2(nextTarget.y - b.y, nextTarget.x - b.x);
+                  const spd = Math.hypot(b.vx, b.vy);
+                  b.vx = Math.cos(rAng) * spd;
+                  b.vy = Math.sin(rAng) * spd;
+                  b.ang = rAng;
+                } else {
+                  b.vx = -b.vx;
+                }
+              } else {
+                b.pierce--;
+                if (b.pierce <= 0) {
+                  Game.bullets.splice(i, 1);
+                }
+              }
+              break;
+            }
+          }
+        }
+
+        const chronoMult = Game.chronoTimer > 0 ? 0.35 : 1.0;
+        const enemyDt = dt * physicsConfig.enemySpeedMult * chronoMult;
+
+        for (let i = Game.enemies.length - 1; i >= 0; i--) {
+          const e = Game.enemies[i];
+          const ang = Math.atan2(p.y - e.y, p.x - e.x);
+
+          // Level 10 Boss Enrage Boost when below 50% HP
+          const bossEnrageMult = (e.type === "boss" && !e.isMiniBoss && e.hp < e.maxHp * 0.5) ? 1.35 : 1.0;
+
+          e.x += Math.cos(ang) * e.speed * bossEnrageMult * enemyDt;
+          e.y += Math.sin(ang) * e.speed * bossEnrageMult * enemyDt;
+          e.spin = (e.spin || 0) + enemyDt * 3.2 * bossEnrageMult;
+
+          if (Math.random() < 0.35 * physicsConfig.particleMult) {
+            Game.particles.push({
+              x: e.x - Math.cos(ang) * (e.radius * 0.7) + (Math.random() - 0.5) * 8,
+              y: e.y - Math.sin(ang) * (e.radius * 0.7) + (Math.random() - 0.5) * 8,
+              vx: -Math.cos(ang) * 35 + (Math.random() - 0.5) * 20,
+              vy: -Math.sin(ang) * 35 + (Math.random() - 0.5) * 20,
+              radius: e.type === "comet" ? 2.2 : 2.8,
+              color: e.type === "comet" ? "#38bdf8" : e.type === "solarstar" ? "#e879f9" : "#fb923c",
+              alpha: 0.75,
+              decay: 2.4
+            });
+          }
+
+          if (e.type === "solarstar") {
+            e.shootTimer -= enemyDt;
+            if (e.shootTimer <= 0) {
+              e.shootTimer = Math.max(1.1, 2.2 - Game.wave * 0.08);
+              const shots = Game.wave >= 7 ? 2 : 1;
+              for (let s = 0; s < shots; s++) {
+                const offset = shots === 1 ? 0 : (s - 0.5) * 0.22;
+                const sAng = ang + offset;
+                Game.enemyBullets.push({
+                  x: e.x,
+                  y: e.y,
+                  vx: Math.cos(sAng) * (185 + Game.wave * 8),
+                  vy: Math.sin(sAng) * (185 + Game.wave * 8),
+                  radius: 5
+                });
+              }
+            }
+          } else if (e.type === "boss") {
+            e.shootTimer -= enemyDt * bossEnrageMult;
+            if (e.shootTimer <= 0) {
+              e.attackPattern = ((e.attackPattern || 0) + 1) % 3;
+              if (e.isMiniBoss) {
+                e.shootTimer = 1.25;
+                const shots = 4;
+                for (let s = 0; s < shots; s++) {
+                  const sAng = ang + (s - 1.5) * 0.22;
+                  Game.enemyBullets.push({
+                    x: e.x,
+                    y: e.y,
+                    vx: Math.cos(sAng) * 215,
+                    vy: Math.sin(sAng) * 215,
+                    radius: 5.5
+                  });
+                }
+              } else {
+                // Level 10 Extreme Solar Dragon Boss Multi-Pattern Attacks!
+                e.shootTimer = 0.95;
+                if (e.attackPattern === 0) {
+                  // 7-Way Dragon Fire Fan
+                  for (let s = -3; s <= 3; s++) {
+                    const sAng = ang + s * 0.19;
+                    Game.enemyBullets.push({
+                      x: e.x,
+                      y: e.y,
+                      vx: Math.cos(sAng) * 240,
+                      vy: Math.sin(sAng) * 240,
+                      radius: 6
+                    });
+                  }
+                } else if (e.attackPattern === 1) {
+                  // 12-Orb 360-Degree Supernova Ring
+                  const ringCount = 12;
+                  for (let s = 0; s < ringCount; s++) {
+                    const sAng = (e.spin || 0) + (s * Math.PI * 2) / ringCount;
+                    Game.enemyBullets.push({
+                      x: e.x,
+                      y: e.y,
+                      vx: Math.cos(sAng) * 195,
+                      vy: Math.sin(sAng) * 195,
+                      radius: 5.5
+                    });
+                  }
+                } else {
+                  // High-Speed Aimed Comet Spear
+                  for (let s = -1; s <= 1; s++) {
+                    const sAng = ang + s * 0.08;
+                    Game.enemyBullets.push({
+                      x: e.x,
+                      y: e.y,
+                      vx: Math.cos(sAng) * 290,
+                      vy: Math.sin(sAng) * 290,
+                      radius: 6.5
+                    });
+                  }
+                }
+              }
+            }
+
+            // Level 10 Final Boss periodically summons minion fireballs
+            if (!e.isMiniBoss) {
+              e.summonTimer = (e.summonTimer || 4.5) - enemyDt;
+              if (e.summonTimer <= 0 && Game.enemies.length < 9) {
+                e.summonTimer = 5.2;
+                Game.enemiesTotalInLevel += 2;
+                spawnSingleEnemy(Game.wave, "minifire", { x: e.x + 35, y: e.y });
+                spawnSingleEnemy(Game.wave, "minifire", { x: e.x - 35, y: e.y });
+                addFloatingText("🔥 DRAGON MINIONS!", e.x, e.y - 45, "#fb923c");
+                updateLevelBannerUI();
+              }
+            }
+          }
+
+          if (Math.hypot(e.x - p.x, e.y - p.y) < e.radius + p.radius) {
+            if (p.shieldTimer <= 0) {
+              p.hp -= e.type === "boss" ? 26 : 14;
+              Game.screenShake = 8;
+              addFloatingText("-Health!", p.x, p.y - 20, "#fb7185");
+            }
+            if (e.type !== "boss") {
+              createBurst(e.x, e.y, e.color, 12);
+              Game.enemies.splice(i, 1);
+              Game.enemiesDefeatedInLevel++;
+              updateLevelBannerUI();
+            }
+            if (p.hp <= 0) {
+              triggerGameOver();
+              return;
+            }
+          }
+        }
+
+        for (let i = Game.enemyBullets.length - 1; i >= 0; i--) {
+          const b = Game.enemyBullets[i];
+          b.x += b.vx * enemyDt;
+          b.y += b.vy * enemyDt;
+          if (b.x < -20 || b.x > Game.width + 20 || b.y < -20 || b.y > Game.height + 20) {
+            Game.enemyBullets.splice(i, 1);
+            continue;
+          }
+          if (Math.hypot(b.x - p.x, b.y - p.y) < b.radius + p.radius) {
+            Game.enemyBullets.splice(i, 1);
+            if (p.shieldTimer <= 0) {
+              p.hp -= 11;
+              Game.screenShake = 6;
+              createBurst(p.x, p.y, "#fb7185", 8);
+              if (p.hp <= 0) {
+                triggerGameOver();
+                return;
+              }
+            }
+          }
+        }
+
+        const magnetRange = 115 * (1 + (saveData.upgrades.magnet || 0) * 0.4);
+        for (let i = Game.gems.length - 1; i >= 0; i--) {
+          const g = Game.gems[i];
+          const d = Math.hypot(p.x - g.x, p.y - g.y);
+          if (d < magnetRange) {
+            const ang = Math.atan2(p.y - g.y, p.x - g.x);
+            g.x += Math.cos(ang) * 360 * dt;
+            g.y += Math.sin(ang) * 360 * dt;
+          }
+          if (d < p.radius + g.radius + 6) {
+            p.xp += g.xp;
+            saveData.shards += g.shards;
+            Game.shardsEarnedThisRun += g.shards;
+            Game.gems.splice(i, 1);
+            checkLevelUp();
+            updateMetaUI();
+          }
+        }
+
+        for (let i = Game.particles.length - 1; i >= 0; i--) {
+          const pt = Game.particles[i];
+          pt.x += pt.vx * dt;
+          pt.y += pt.vy * dt;
+          pt.alpha -= pt.decay * dt;
+          if (pt.alpha <= 0) Game.particles.splice(i, 1);
+        }
+
+        for (let i = Game.floatingTexts.length - 1; i >= 0; i--) {
+          const ft = Game.floatingTexts[i];
+          ft.y += ft.vy * dt;
+          ft.alpha -= dt * 1.1;
+          if (ft.alpha <= 0) Game.floatingTexts.splice(i, 1);
+        }
+
+        updateHud();
+      }
+
+      // =========================================================
+      // 6. RICH SPACE, ENEMIES & 3 DISTINCT ROCKET HULL RENDERING
+      // =========================================================
+      function drawSpaceBackground() {
+        const bgGrad = ctx.createLinearGradient(0, 0, 0, Game.height);
+        bgGrad.addColorStop(0, "#02030a");
+        bgGrad.addColorStop(0.5, "#060b20");
+        bgGrad.addColorStop(1, "#09071c");
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, Game.width, Game.height);
+
+        for (let i = 0; i < Game.nebulas.length; i++) {
+          const nb = Game.nebulas[i];
+          const rad = ctx.createRadialGradient(nb.x, nb.y, 10, nb.x, nb.y, nb.r);
+          rad.addColorStop(0, nb.color);
+          rad.addColorStop(1, "rgba(0, 0, 0, 0)");
+          ctx.fillStyle = rad;
+          ctx.beginPath();
+          ctx.arc(nb.x, nb.y, nb.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        for (let i = 0; i < Game.stars.length; i++) {
+          const s = Game.stars[i];
+          const twinkle = 0.65 + 0.35 * Math.sin(Game.animTime * s.twinkleSpeed + i);
+          ctx.globalAlpha = s.alpha * twinkle;
+          ctx.fillStyle = s.color;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+
+        for (let i = 0; i < Game.planets.length; i++) {
+          const pl = Game.planets[i];
+          ctx.save();
+          ctx.translate(pl.x, pl.y);
+          const pGrad = ctx.createRadialGradient(-pl.r * 0.3, -pl.r * 0.3, pl.r * 0.1, 0, 0, pl.r);
+          pGrad.addColorStop(0, pl.bodyColor1);
+          pGrad.addColorStop(1, pl.bodyColor2);
+          ctx.fillStyle = pGrad;
+          ctx.beginPath();
+          ctx.arc(0, 0, pl.r, 0, Math.PI * 2);
+          ctx.fill();
+
+          if (pl.hasRing) {
+            ctx.strokeStyle = pl.ringColor;
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, pl.r * 1.85, pl.r * 0.45, -0.25, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          ctx.restore();
+        }
+      }
+
+      function drawEnemyEntity(e) {
+        ctx.save();
+        ctx.translate(e.x, e.y);
+
+        if (e.type === "fireball") {
+          const moveAng = Game.player ? Math.atan2(Game.player.y - e.y, Game.player.x - e.x) : 0;
+          ctx.rotate(moveAng);
+
+          const flicker = Math.sin(Game.animTime * 22 + e.x) * 4;
+          ctx.fillStyle = "rgba(239, 68, 68, 0.55)";
+          ctx.beginPath();
+          ctx.moveTo(0, -e.radius * 0.9);
+          ctx.lineTo(-e.radius * 1.9 + flicker, 0);
+          ctx.lineTo(0, e.radius * 0.9);
+          ctx.closePath();
+          ctx.fill();
+
+          const fGrad = ctx.createRadialGradient(2, 0, 2, 0, 0, e.radius * 1.25);
+          fGrad.addColorStop(0, "#fef08a");
+          fGrad.addColorStop(0.45, "#f97316");
+          fGrad.addColorStop(0.85, "#dc2626");
+          fGrad.addColorStop(1, "rgba(220, 38, 38, 0)");
+          ctx.fillStyle = fGrad;
+          ctx.beginPath();
+          ctx.arc(0, 0, e.radius * 1.25, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (e.type === "splitter") {
+          ctx.rotate(e.spin || 0);
+          const sGrad = ctx.createRadialGradient(0, 0, 2, 0, 0, e.radius);
+          sGrad.addColorStop(0, "#fef08a");
+          sGrad.addColorStop(0.5, "#f43f5e");
+          sGrad.addColorStop(1, "#881337");
+          ctx.fillStyle = sGrad;
+          ctx.strokeStyle = "#fda4af";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(0, 0, e.radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = "#fef08a";
+          ctx.beginPath();
+          ctx.arc(-5, -4, 3.5, 0, Math.PI * 2);
+          ctx.arc(5, 4, 3.5, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (e.type === "comet") {
+          const moveAng = Game.player ? Math.atan2(Game.player.y - e.y, Game.player.x - e.x) : 0;
+          ctx.rotate(moveAng);
+
+          ctx.fillStyle = "rgba(56, 189, 248, 0.38)";
+          ctx.beginPath();
+          ctx.moveTo(0, -e.radius * 0.75);
+          ctx.lineTo(-e.radius * 2.3, 0);
+          ctx.lineTo(0, e.radius * 0.75);
+          ctx.closePath();
+          ctx.fill();
+
+          const cGrad = ctx.createRadialGradient(2, 0, 1, 0, 0, e.radius);
+          cGrad.addColorStop(0, "#ffffff");
+          cGrad.addColorStop(0.5, "#38bdf8");
+          cGrad.addColorStop(1, "#0284c7");
+          ctx.fillStyle = cGrad;
+          ctx.beginPath();
+          ctx.arc(0, 0, e.radius, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (e.type === "solarstar") {
+          ctx.rotate(e.spin || 0);
+          ctx.fillStyle = "#c026d3";
+          ctx.strokeStyle = "#f5d0fe";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          const spikes = 6;
+          for (let i = 0; i < spikes * 2; i++) {
+            const r = i % 2 === 0 ? e.radius * 1.15 : e.radius * 0.55;
+            const a = (i * Math.PI) / spikes;
+            if (i === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+            else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+          }
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        } else if (e.type === "boss") {
+          const enraged = !e.isMiniBoss && e.hp < e.maxHp * 0.5;
+          ctx.save();
+          ctx.rotate(e.spin || 0);
+          ctx.fillStyle = enraged ? "rgba(244, 63, 94, 0.45)" : "rgba(245, 158, 11, 0.35)";
+          const rays = 12;
+          ctx.beginPath();
+          for (let i = 0; i < rays * 2; i++) {
+            const r = i % 2 === 0 ? e.radius * 1.42 : e.radius * 0.92;
+            const a = (i * Math.PI) / rays;
+            if (i === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+            else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+          }
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+
+          const bGrad = ctx.createRadialGradient(0, 0, 4, 0, 0, e.radius);
+          bGrad.addColorStop(0, "#fef08a");
+          bGrad.addColorStop(0.5, enraged ? "#e11d48" : "#f97316");
+          bGrad.addColorStop(1, "#7f1d1d");
+          ctx.fillStyle = bGrad;
+          ctx.strokeStyle = enraged ? "#fda4af" : "#fde047";
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(0, 0, e.radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
+
+        if (e.hp < e.maxHp || e.type === "boss") {
+          const bw = e.radius * 2.3;
+          ctx.fillStyle = "rgba(15, 23, 42, 0.9)";
+          ctx.fillRect(-bw / 2, -e.radius - 12, bw, 5);
+          ctx.fillStyle = e.type === "boss" ? "#facc15" : "#fb7185";
+          ctx.fillRect(-bw / 2, -e.radius - 12, bw * Math.max(0, e.hp / e.maxHp), 5);
+        }
+
+        ctx.restore();
+      }
+
+      // Renders 3 completely distinct Space Rocket designs based on p.shipKey!
+      function drawPlayerRocket(p) {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.angle);
+
+        if (p.shieldTimer > 0) {
+          ctx.strokeStyle = "#34d399";
+          ctx.fillStyle = "rgba(52, 211, 153, 0.13)";
+          ctx.lineWidth = 2.2;
+          ctx.beginPath();
+          ctx.arc(0, 0, p.radius + 11, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
+
+        const isMoving = Math.hypot(p.vx, p.vy) > 20;
+        const flameLen = (isMoving ? 20 : 12) + Math.sin(Game.animTime * 35) * 4;
+
+        if (p.shipKey === "phantom") {
+          // ====================================================
+          // ROCKET 2: COSMIC COMET (Purple Forward-Swept Stealth)
+          // ====================================================
+          const flameGrad = ctx.createLinearGradient(-11, 0, -11 - flameLen * 1.25, 0);
+          flameGrad.addColorStop(0, "#ffffff");
+          flameGrad.addColorStop(0.35, "#e879f9");
+          flameGrad.addColorStop(0.75, "#9333ea");
+          flameGrad.addColorStop(1, "rgba(147, 51, 234, 0)");
+          ctx.fillStyle = flameGrad;
+          ctx.beginPath();
+          ctx.moveTo(-11, -4.5);
+          ctx.lineTo(-11 - flameLen * 1.25, 0);
+          ctx.lineTo(-11, 4.5);
+          ctx.closePath();
+          ctx.fill();
+
+          // Forward-swept crescent wings
+          ctx.fillStyle = "#581c87";
+          ctx.strokeStyle = "#c084fc";
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          ctx.moveTo(8, -4);
+          ctx.lineTo(-14, -20);
+          ctx.lineTo(-8, -4);
+          ctx.closePath();
+          ctx.moveTo(8, 4);
+          ctx.lineTo(-14, 20);
+          ctx.lineTo(-8, 4);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          // Sleek dark-indigo needle fuselage
+          ctx.fillStyle = "#1e1b4b";
+          ctx.strokeStyle = "#e879f9";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(26, 0);
+          ctx.lineTo(-6, -9);
+          ctx.lineTo(-14, -4);
+          ctx.lineTo(-10, 0);
+          ctx.lineTo(-14, 4);
+          ctx.lineTo(-6, 9);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          // Glowing diamond crystal cockpit
+          ctx.fillStyle = "#f0abfc";
+          ctx.beginPath();
+          ctx.moveTo(11, 0);
+          ctx.lineTo(-2, -3.8);
+          ctx.lineTo(-6, 0);
+          ctx.lineTo(-2, 3.8);
+          ctx.closePath();
+          ctx.fill();
+        } else if (p.shipKey === "titan") {
+          // ====================================================
+          // ROCKET 3: GALAXY CRUISER (Emerald Twin-Engine Tank)
+          // ====================================================
+          const flameGrad = ctx.createLinearGradient(-15, 0, -15 - flameLen, 0);
+          flameGrad.addColorStop(0, "#ffffff");
+          flameGrad.addColorStop(0.4, "#34d399");
+          flameGrad.addColorStop(0.8, "#059669");
+          flameGrad.addColorStop(1, "rgba(5, 150, 105, 0)");
+          ctx.fillStyle = flameGrad;
+
+          // Dual Left + Right Jet Thrusters
+          ctx.beginPath();
+          ctx.moveTo(-15, -9.5);
+          ctx.lineTo(-15 - flameLen, -6);
+          ctx.lineTo(-15, -2.5);
+          ctx.moveTo(-15, 2.5);
+          ctx.lineTo(-15 - flameLen, 6);
+          ctx.lineTo(-15, 9.5);
+          ctx.closePath();
+          ctx.fill();
+
+          // Heavy outer side cannon pods
+          ctx.fillStyle = "#065f46";
+          ctx.strokeStyle = "#34d399";
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          ctx.roundRect(-12, -19, 22, 6.5, 2);
+          ctx.roundRect(-12, 12.5, 22, 6.5, 2);
+          ctx.fill();
+          ctx.stroke();
+
+          // Triple gun barrels
+          ctx.fillStyle = "#a7f3d0";
+          ctx.fillRect(10, -17, 6, 2.5);
+          ctx.fillRect(10, 14.5, 6, 2.5);
+
+          // Broad armored dreadnought hull
+          ctx.fillStyle = "#064e3b";
+          ctx.strokeStyle = "#6ee7b7";
+          ctx.lineWidth = 2.2;
+          ctx.beginPath();
+          ctx.moveTo(20, -5);
+          ctx.lineTo(20, 5);
+          ctx.lineTo(8, 12);
+          ctx.lineTo(-15, 12);
+          ctx.lineTo(-15, -12);
+          ctx.lineTo(8, -12);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          // Golden armored bridge visor
+          ctx.fillStyle = "#fef08a";
+          ctx.strokeStyle = "#f59e0b";
+          ctx.lineWidth = 1.4;
+          ctx.beginPath();
+          ctx.roundRect(-3, -5.5, 11, 11, 2.5);
+          ctx.fill();
+          ctx.stroke();
+        } else {
+          // ====================================================
+          // ROCKET 1: STAR FALCON (Classic White & Cyan Jet)
+          // ====================================================
+          const flameGrad = ctx.createLinearGradient(-12, 0, -12 - flameLen, 0);
+          flameGrad.addColorStop(0, "#ffffff");
+          flameGrad.addColorStop(0.35, "#facc15");
+          flameGrad.addColorStop(0.75, "#f97316");
+          flameGrad.addColorStop(1, "rgba(239, 68, 68, 0)");
+          ctx.fillStyle = flameGrad;
+          ctx.beginPath();
+          ctx.moveTo(-12, -5.5);
+          ctx.lineTo(-12 - flameLen, 0);
+          ctx.lineTo(-12, 5.5);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.fillStyle = "#0284c7";
+          ctx.strokeStyle = "#38bdf8";
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(-2, -7);
+          ctx.lineTo(-13, -17);
+          ctx.lineTo(-15, -7);
+          ctx.closePath();
+          ctx.moveTo(-2, 7);
+          ctx.lineTo(-13, 17);
+          ctx.lineTo(-15, 7);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = "#e2e8f0";
+          ctx.fillRect(-6, -14, 8, 2.5);
+          ctx.fillRect(-6, 11.5, 8, 2.5);
+
+          const bodyGrad = ctx.createLinearGradient(0, -10, 0, 10);
+          bodyGrad.addColorStop(0, "#f8fafc");
+          bodyGrad.addColorStop(0.5, "#cbd5e1");
+          bodyGrad.addColorStop(1, "#94a3b8");
+          ctx.fillStyle = bodyGrad;
+          ctx.strokeStyle = "#38bdf8";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(22, 0);
+          ctx.quadraticCurveTo(10, -10, -12, -8);
+          ctx.lineTo(-14, -5);
+          ctx.lineTo(-14, 5);
+          ctx.lineTo(-12, 8);
+          ctx.quadraticCurveTo(10, 10, 22, 0);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = "#38bdf8";
+          ctx.beginPath();
+          ctx.moveTo(22, 0);
+          ctx.quadraticCurveTo(15, -5.5, 9, -6.5);
+          ctx.lineTo(9, 6.5);
+          ctx.quadraticCurveTo(15, 5.5, 22, 0);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.fillStyle = "#0ea5e9";
+          ctx.strokeStyle = "#e0f2fe";
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.ellipse(2, 0, 5.5, 3.6, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
+
+        ctx.restore();
+
+        if (p.orbitals > 0) {
+          const orbRadius = 48;
+          for (let i = 0; i < p.orbitals; i++) {
+            const ang = p.orbitalAngle + (i * Math.PI * 2) / p.orbitals;
+            const ox = p.x + Math.cos(ang) * orbRadius;
+            const oy = p.y + Math.sin(ang) * orbRadius;
+            ctx.fillStyle = "#34d399";
+            ctx.strokeStyle = "#a7f3d0";
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(ox, oy, 5.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+          }
+        }
+      }
+
+      function renderScene() {
+        ctx.save();
+
+        if (Game.screenShake > 0) {
+          const sx = (Math.random() - 0.5) * Game.screenShake;
+          const sy = (Math.random() - 0.5) * Game.screenShake;
+          ctx.translate(sx, sy);
+        }
+
+        drawSpaceBackground();
+
+        if (Game.chronoTimer > 0) {
+          ctx.fillStyle = "rgba(192, 132, 252, 0.08)";
+          ctx.fillRect(0, 0, Game.width, Game.height);
+        }
+
+        for (let i = 0; i < Game.gems.length; i++) {
+          const g = Game.gems[i];
+          ctx.fillStyle = "#c084fc";
+          ctx.strokeStyle = "#f3e8ff";
+          ctx.lineWidth = 1.4;
+          ctx.beginPath();
+          ctx.arc(g.x, g.y, g.radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
+
+        for (let i = 0; i < Game.particles.length; i++) {
+          const pt = Game.particles[i];
+          ctx.globalAlpha = Math.max(0, pt.alpha);
+          ctx.fillStyle = pt.color;
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, pt.radius, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+
+        for (let i = 0; i < Game.bullets.length; i++) {
+          const b = Game.bullets[i];
+          ctx.save();
+          ctx.translate(b.x, b.y);
+          ctx.rotate(b.ang || 0);
+          ctx.fillStyle = "#ffffff";
+          ctx.strokeStyle = b.color;
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          if (b.shipType === "phantom") {
+            ctx.roundRect(-11, -1.8, 22, 3.6, 2);
+          } else if (b.shipType === "titan") {
+            ctx.arc(0, 0, 4.6, 0, Math.PI * 2);
+          } else {
+            ctx.roundRect(-7, -2.2, 14, 4.4, 2);
+          }
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        for (let i = 0; i < Game.enemyBullets.length; i++) {
+          const b = Game.enemyBullets[i];
+          const ebGrad = ctx.createRadialGradient(b.x, b.y, 1, b.x, b.y, b.radius * 1.4);
+          ebGrad.addColorStop(0, "#fef08a");
+          ebGrad.addColorStop(0.6, "#f97316");
+          ebGrad.addColorStop(1, "rgba(239, 68, 68, 0)");
+          ctx.fillStyle = ebGrad;
+          ctx.beginPath();
+          ctx.arc(b.x, b.y, b.radius * 1.4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        for (let i = 0; i < Game.enemies.length; i++) {
+          drawEnemyEntity(Game.enemies[i]);
+        }
+
+        if (Game.player) {
+          drawPlayerRocket(Game.player);
+        }
+
+        ctx.font = "bold 12px 'JetBrains Mono', monospace";
+        ctx.textAlign = "center";
+        for (let i = 0; i < Game.floatingTexts.length; i++) {
+          const ft = Game.floatingTexts[i];
+          ctx.globalAlpha = Math.max(0, ft.alpha);
+          ctx.fillStyle = ft.color;
+          ctx.fillText(ft.text, ft.x, ft.y);
+        }
+        ctx.globalAlpha = 1;
+
+        ctx.restore();
+      }
+
+      // ==========================================
+      // 7. UI SYNCHRONIZATION & EVENT HANDLERS
+      // ==========================================
+      function updateHud() {
+        const p = Game.player;
+        if (!p) return;
+
+        const shipNameEl = document.getElementById("hudShipName");
+        if (shipNameEl) shipNameEl.textContent = p.name;
+
+        const hpPct = Math.max(0, Math.min(100, (p.hp / p.maxHp) * 100));
+        document.getElementById("hudHpText").textContent = `${Math.max(0, Math.round(p.hp))} / ${p.maxHp}`;
+        document.getElementById("hudHpBar").style.width = hpPct + "%";
+
+        const xpPct = Math.max(0, Math.min(100, (p.xp / p.nextXp) * 100));
+        document.getElementById("hudLevel").textContent = String(p.level);
+        document.getElementById("hudXpText").textContent = `${Math.floor(p.xp)} / ${p.nextXp} Gems`;
+        document.getElementById("hudXpBar").style.width = xpPct + "%";
+
+        const skillReady = p.skillTimer <= 0;
+        const skillPct = skillReady ? 100 : Math.max(0, 100 - (p.skillTimer / p.skillCooldown) * 100);
+        document.getElementById("hudSkillText").textContent = skillReady ? "READY!" : p.skillTimer.toFixed(1) + "s";
+        document.getElementById("hudSkillBar").style.width = skillPct + "%";
+
+        const remaining = Math.max(0, Game.enemiesTotalInLevel - Game.enemiesDefeatedInLevel);
+        document.getElementById("hudWave").textContent = String(Game.wave);
+        document.getElementById("hudCombo").textContent = String(remaining);
+        document.getElementById("hudScore").textContent = Game.score.toLocaleString();
+
+        document.getElementById("statEntities").textContent = String(Game.enemies.length + Game.bullets.length + Game.enemyBullets.length);
+        document.getElementById("statParticles").textContent = String(Game.particles.length);
+        document.getElementById("statDps").textContent = Math.round(Game.dpsTracker) + " /s";
+      }
+
+      function updateMetaUI() {
+        document.getElementById("headerShards").textContent = saveData.shards.toLocaleString();
+        document.getElementById("startHighScore").textContent = saveData.highScore.toLocaleString();
+        document.getElementById("careerHighScore").textContent = saveData.highScore.toLocaleString();
+        document.getElementById("careerHighestWave").textContent = `${saveData.highestWave} / 10`;
+        document.getElementById("careerKills").textContent = saveData.totalKills.toLocaleString();
+        document.getElementById("careerBosses").textContent = saveData.bossesKilled.toLocaleString();
+        renderLevelSelectorGrid();
+        renderHangar();
+        renderBadges();
+      }
+
+      function renderHangar() {
+        const grid = document.getElementById("hangarGrid");
+        if (!grid) return;
+        grid.innerHTML = "";
+        HANGAR_UPGRADES.forEach(u => {
+          const rank = saveData.upgrades[u.key] || 0;
+          const cost = u.baseCost * (rank + 1);
+          const isMax = rank >= u.max;
+          const canAfford = !isMax && saveData.shards >= cost;
+
+          const card = document.createElement("div");
+          card.className = "p-4 rounded-xl bg-slate-950/90 border border-slate-800 flex flex-col justify-between";
+          card.innerHTML = `
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <span class="font-bold text-sm text-white">${u.name}</span>
+                <span class="text-xs mono text-cyan-300">Level ${rank} / ${u.max}</span>
+              </div>
+              <p class="text-xs text-slate-300 mb-3">${u.desc}</p>
+            </div>
+            <button type="button" class="w-full py-2 px-3 rounded-lg text-xs font-bold transition-all ${
+              isMax
+                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 cursor-default"
+                : canAfford
+                ? "bg-cyan-500 hover:bg-cyan-400 text-slate-950"
+                : "bg-slate-800 text-slate-500 border border-slate-700"
+            }">
+              ${isMax ? "MAX LEVEL REACHED" : `Buy Upgrade (${cost} 🪙 Coins)`}
+            </button>
+          `;
+          const btn = card.querySelector("button");
+          btn.addEventListener("click", () => {
+            if (isMax) return;
+            if (saveData.shards < cost) {
+              showToast("Need more Coins! Blast Fireballs or click '+250 Free Coins'.");
+              return;
+            }
+            saveData.shards -= cost;
+            saveData.upgrades[u.key] = rank + 1;
+            Sound.playPowerup();
+            persistSave();
+            showToast(`Upgraded ${u.name} to Level ${rank + 1}!`);
+          });
+          grid.appendChild(card);
+        });
+      }
+
+      function renderBadges() {
+        const grid = document.getElementById("badgesGrid");
+        if (!grid) return;
+        grid.innerHTML = BADGES.map(b => {
+          const unlocked = b.check();
+          return `
+            <div class="p-3 rounded-xl border ${unlocked ? "bg-cyan-950/25 border-cyan-500/40" : "bg-slate-950/60 border-slate-800 opacity-60"} flex items-center justify-between">
+              <div>
+                <div class="text-xs font-bold ${unlocked ? "text-cyan-300" : "text-slate-400"}">🏅 ${b.name}</div>
+                <div class="text-[11px] text-slate-300">${b.desc}</div>
+              </div>
+              <span class="text-[10px] mono px-2 py-0.5 rounded font-semibold ${unlocked ? "bg-emerald-500/20 text-emerald-300" : "bg-slate-800 text-slate-500"}">
+                ${unlocked ? "EARNED!" : "LOCKED"}
+              </span>
+            </div>
+          `;
+        }).join("");
+      }
+
+      let toastTimeout = null;
+      function showToast(msg) {
+        const el = document.getElementById("toastBanner");
+        if (!el) return;
+        el.textContent = msg;
+        el.classList.remove("hidden");
+        if (toastTimeout) clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => el.classList.add("hidden"), 2500);
+      }
+
+      function updateAiBotButton() {
+        const dot = document.getElementById("aiBotDot");
+        const lbl = document.getElementById("aiBotLabel");
+        if (aiPilotEnabled) {
+          dot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
+          lbl.textContent = "ON";
+          lbl.className = "text-emerald-300";
+        } else {
+          dot.className = "w-2 h-2 rounded-full bg-slate-500";
+          lbl.textContent = "OFF";
+          lbl.className = "";
+        }
+      }
+
+      // ==========================================
+      // 8. WIRE ALL LISTENERS & START LOOP
+      // ==========================================
+      window.addEventListener("load", () => {
+        loadSave();
+        selectedLevelNum = saveData.highestWave || 1;
+        updateMetaUI();
+
+        if (!saveData.hasSeenGuide) {
+          document.getElementById("overlayGuide").classList.remove("hidden");
+        }
+
+        window.addEventListener("resize", () => {
+          resizeCanvas();
+          renderScene();
+        });
+
+        // Guide Open/Close
+        document.getElementById("btnOpenGuide").addEventListener("click", () => {
+          if (Game.running && !Game.paused) {
+            Game.paused = true;
+            document.getElementById("btnPause").textContent = "Resume";
+          }
+          document.getElementById("overlayGuide").classList.remove("hidden");
+        });
+
+        document.getElementById("btnCloseGuide").addEventListener("click", () => {
+          saveData.hasSeenGuide = true;
+          persistSave();
+          document.getElementById("overlayGuide").classList.add("hidden");
+          if (Game.running && Game.paused) {
+            Game.paused = false;
+            document.getElementById("btnPause").textContent = "Pause";
+          }
+        });
+
+        // Top Multi-Page Navigation Buttons
+        ["btnHomeMenu", "tabArena", "tabHangar", "tabSandbox", "tabStats"].forEach(id => {
+          document.getElementById(id).addEventListener("click", () => switchPage(id));
+        });
+        document.getElementById("btnBrandHome").addEventListener("click", () => switchPage("btnHomeMenu"));
+
+        // Unlock All 10 Levels button
+        document.getElementById("btnUnlockAllLevels").addEventListener("click", () => {
+          saveData.highestWave = 10;
+          persistSave();
+          showToast("🔓 All 10 Space Levels Unlocked!");
+        });
+
+        // Ship Selector Cards on Home Page (Immediately updates active rocket in Play Ground too!)
+        document.querySelectorAll(".ship-card").forEach(card => {
+          card.addEventListener("click", () => {
+            selectedShipKey = card.getAttribute("data-ship") || "vanguard";
+            const shipMeta = SHIPS[selectedShipKey] || SHIPS.vanguard;
+            document.getElementById("activeShipBadge").textContent = shipMeta.name;
+
+            document.querySelectorAll(".ship-card").forEach(c => {
+              c.className = "ship-card text-left p-4 rounded-xl border-2 border-slate-800 bg-slate-950/60 hover:border-slate-700 transition-all flex flex-col justify-between";
+            });
+            card.className = "ship-card text-left p-4 rounded-xl border-2 border-cyan-400 bg-cyan-950/30 transition-all flex flex-col justify-between";
+
+            if (Game.player) {
+              applySelectedShipToActivePlayer(selectedShipKey);
+            }
+            showToast(`🚀 Equipped ${shipMeta.name}!`);
+          });
+        });
+
+        // Home Page Launch Buttons
+        document.getElementById("btnStartGame").addEventListener("click", () => startLevel(selectedLevelNum, false, false));
+        document.getElementById("btnStartFreshRun").addEventListener("click", () => startLevel(1, true, false));
+        document.getElementById("btnStartAiDemo").addEventListener("click", () => startLevel(selectedLevelNum, false, true));
+
+        // Safe Pending Power-Up Button & Skip Button
+        document.getElementById("btnOpenPendingPowerup").addEventListener("click", () => {
+          if (Game.running && !Game.inUpgradeModal) {
+            openUpgradeDraft();
+          }
+        });
+        document.getElementById("btnSkipUpgradeCoins").addEventListener("click", () => {
+          if (Game.pendingUpgrades > 0) Game.pendingUpgrades--;
+          saveData.shards += 35;
+          Game.shardsEarnedThisRun += 35;
+          persistSave();
+          showToast("🪙 +35 Coins Added!");
+          closeUpgradeModalWithShield();
+        });
+
+        // Level Win Modal Buttons
+        document.getElementById("btnNextLevel").addEventListener("click", () => {
+          const nextLvl = Game.wave >= 10 ? 1 : Game.wave + 1;
+          startLevel(nextLvl, false, aiPilotEnabled);
+        });
+        document.getElementById("btnReplayLevel").addEventListener("click", () => {
+          startLevel(Game.wave, false, aiPilotEnabled);
+        });
+        document.getElementById("btnWinToHome").addEventListener("click", () => {
+          selectedLevelNum = Game.wave < 10 ? Game.wave + 1 : 10;
+          switchPage("btnHomeMenu");
+        });
+
+        // Game Over Modal Buttons
+        document.getElementById("btnRetry").addEventListener("click", () => startLevel(Game.wave, false, aiPilotEnabled));
+        document.getElementById("btnGameOverNewGame").addEventListener("click", () => startLevel(1, true, false));
+        document.getElementById("btnGameOverHome").addEventListener("click", () => switchPage("btnHomeMenu"));
+        document.getElementById("btnGoHangar").addEventListener("click", () => {
+          document.getElementById("overlayGameOver").classList.add("hidden");
+          switchPage("tabHangar");
+        });
+
+        // Auto-Pilot Toggle
+        document.getElementById("btnAiBot").addEventListener("click", () => {
+          aiPilotEnabled = !aiPilotEnabled;
+          updateAiBotButton();
+          showToast(aiPilotEnabled ? "🤖 Auto-Pilot Turned ON" : "🕹️ Manual Control Restored");
+        });
+
+        // Audio Mute Toggle
+        document.getElementById("btnAudio").addEventListener("click", () => {
+          Sound.init();
+          Sound.muted = !Sound.muted;
+          document.getElementById("iconSoundOn").classList.toggle("hidden", Sound.muted);
+          document.getElementById("iconSoundOff").classList.toggle("hidden", !Sound.muted);
+          showToast(Sound.muted ? "🔇 Sound Muted" : "🔊 Sound Turned On");
+        });
+
+        // Pause Button
+        document.getElementById("btnPause").addEventListener("click", () => {
+          if (!Game.running) return;
+          Game.paused = !Game.paused;
+          document.getElementById("btnPause").textContent = Game.paused ? "Resume" : "Pause";
+          showToast(Game.paused ? "⏸️ Game Paused" : "▶️ Game Resumed");
+        });
+
+        // Super Power Button
+        document.getElementById("btnTriggerOverdrive").addEventListener("click", () => triggerOverdrive());
+
+        // Instant Helper Buttons
+        document.getElementById("btnSpawnSwarm").addEventListener("click", () => {
+          if (!Game.running) startLevel(selectedLevelNum, false, aiPilotEnabled);
+          else switchPage("tabArena", true);
+          for (let i = 0; i < 6; i++) {
+            Game.enemiesTotalInLevel++;
+            spawnSingleEnemy(Game.wave, "fireball");
+          }
+          updateLevelBannerUI();
+          showToast("🔥 Spawned +6 Blazing Fireballs in Play Ground!");
+        });
+        document.getElementById("btnSpawnBoss").addEventListener("click", () => {
+          saveData.highestWave = 10;
+          persistSave();
+          startLevel(10, false, aiPilotEnabled);
+          showToast("👹 Warped to Level 10: Solar Dragon Emperor Boss!");
+        });
+        document.getElementById("btnGiftUpgrade").addEventListener("click", () => {
+          if (!Game.running) startLevel(selectedLevelNum, false, aiPilotEnabled);
+          else switchPage("tabArena", true);
+          openUpgradeDraft();
+        });
+        document.getElementById("btnHealShip").addEventListener("click", () => {
+          if (!Game.running) startLevel(selectedLevelNum, false, aiPilotEnabled);
+          else switchPage("tabArena", true);
+          if (Game.player) {
+            Game.player.hp = Game.player.maxHp;
+            Game.player.shieldTimer = 4.0;
+            updateHud();
+          }
+          showToast("❤️ Full Rocket Health + Shield Activated!");
+        });
+
+        // Upgrade Shop Actions
+        document.getElementById("btnAddTestShards").addEventListener("click", () => {
+          saveData.shards += 250;
+          persistSave();
+          showToast("🪙 +250 Free Coins Added!");
+        });
+        document.getElementById("btnResetUpgrades").addEventListener("click", () => {
+          let refunded = 0;
+          HANGAR_UPGRADES.forEach(u => {
+            const rank = saveData.upgrades[u.key] || 0;
+            for (let r = 0; r < rank; r++) refunded += u.baseCost * (r + 1);
+            saveData.upgrades[u.key] = 0;
+          });
+          saveData.shards += refunded;
+          persistSave();
+          showToast(`Refunded ${refunded} Coins!`);
+        });
+
+        // Game Speed & Fun Sliders
+        const bindSlider = (sliderId, lblId, key, suffix) => {
+          const sl = document.getElementById(sliderId);
+          const lb = document.getElementById(lblId);
+          sl.addEventListener("input", () => {
+            physicsConfig[key] = parseFloat(sl.value);
+            lb.textContent = parseFloat(sl.value).toFixed(2) + suffix;
+          });
+        };
+        bindSlider("sliderTimeScale", "lblTimeScale", "timeScale", "x");
+        bindSlider("sliderParticles", "lblParticles", "particleMult", "x");
+        bindSlider("sliderEnemySpeed", "lblEnemySpeed", "enemySpeedMult", "x");
+        bindSlider("sliderStarSpeed", "lblStarSpeed", "starSpeedMult", "x");
+
+        document.getElementById("btnResetPhysics").addEventListener("click", () => {
+          physicsConfig = { timeScale: 1.0, particleMult: 1.0, enemySpeedMult: 1.0, starSpeedMult: 1.0 };
+          document.getElementById("sliderTimeScale").value = "1.0";
+          document.getElementById("lblTimeScale").textContent = "1.00x";
+          document.getElementById("sliderParticles").value = "1.0";
+          document.getElementById("lblParticles").textContent = "1.0x";
+          document.getElementById("sliderEnemySpeed").value = "1.0";
+          document.getElementById("lblEnemySpeed").textContent = "1.0x";
+          document.getElementById("sliderStarSpeed").value = "1.0";
+          document.getElementById("lblStarSpeed").textContent = "1.0x";
+          showToast("⚙️ Game Speed Reset to Normal (1.0x)");
+        });
+
+        // Keyboard & Mouse Input
+        window.addEventListener("keydown", e => {
+          keys[e.code] = true;
+          if (e.code === "Space" && Game.running && !Game.inUpgradeModal) {
+            e.preventDefault();
+            triggerOverdrive();
+          }
+          if ((e.code === "KeyE" || e.code === "KeyP") && Game.running && !Game.inUpgradeModal && Game.pendingUpgrades > 0) {
+            e.preventDefault();
+            openUpgradeDraft();
+          }
+        });
+        window.addEventListener("keyup", e => {
+          keys[e.code] = false;
+        });
+
+        canvas.addEventListener("mousemove", e => {
+          const rect = canvas.getBoundingClientRect();
+          mouse.x = e.clientX - rect.left;
+          mouse.y = e.clientY - rect.top;
+          mouse.active = true;
+        });
+        canvas.addEventListener("mousedown", () => {
+          Sound.init();
+          mouse.down = true;
+        });
+        window.addEventListener("mouseup", () => {
+          mouse.down = false;
+        });
+
+        // Touch D-Pad Buttons
+        document.querySelectorAll(".touch-dir").forEach(btn => {
+          const dir = btn.getAttribute("data-dir");
+          const start = e => { e.preventDefault(); Sound.init(); touchDirs[dir] = true; };
+          const end = e => { e.preventDefault(); touchDirs[dir] = false; };
+          btn.addEventListener("touchstart", start);
+          btn.addEventListener("touchend", end);
+          btn.addEventListener("mousedown", start);
+          btn.addEventListener("mouseup", end);
+          btn.addEventListener("mouseleave", end);
+        });
+
+        // Main Animation Loop
+        let lastTime = performance.now();
+        function frame(now) {
+          const rawDt = (now - lastTime) / 1000;
+          lastTime = now;
+          updateSimulation(rawDt);
+          renderScene();
+          requestAnimationFrame(frame);
+        }
+        requestAnimationFrame(frame);
+      });
+    })();
+  </script>
+</body>
+</html>
